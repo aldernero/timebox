@@ -17,6 +17,19 @@ type TBDB struct {
 	driver string
 }
 
+type SpanRow struct {
+	start int64
+	end   int64
+	name  string
+}
+
+type BoxRow struct {
+	name       string
+	createTime int64
+	minTime    int64
+	maxTime    int64
+}
+
 func NewDBWithName(name string) TBDB {
 	return TBDB{
 		name:   name,
@@ -32,6 +45,8 @@ func (d TBDB) Init() {
 		}
 	}
 }
+
+// Create functions
 
 func (d TBDB) CreateDB() error {
 	db, err := sql.Open(d.driver, d.name)
@@ -149,6 +164,7 @@ func (d TBDB) DoesBoxExist(name string) (bool, error) {
 	if err != nil {
 		return result, err
 	}
+	defer db.Close()
 	row := db.QueryRow("SELECT COUNT(*) FROM boxes WHERE name = ?", name)
 	var count int
 	err = row.Scan(&count)
@@ -157,4 +173,128 @@ func (d TBDB) DoesBoxExist(name string) (bool, error) {
 	}
 	result = count > 0
 	return result, nil
+}
+
+// Read functions
+
+func (d TBDB) GetBox(name string) (BoxRow, error) {
+	var result BoxRow
+	db, err := sql.Open(d.driver, d.name)
+	if err != nil {
+		return result, err
+	}
+	defer db.Close()
+	row := db.QueryRow("SELECT * FROM boxes WHERE name = ?", name)
+	var createTime, minTime, maxTime int64
+	err = row.Scan(&name, &createTime, &minTime, &maxTime)
+	if err != nil {
+		return result, err
+	}
+	return BoxRow{name, createTime, minTime, maxTime}, nil
+}
+
+func (d TBDB) GetAllBoxes() ([]BoxRow, error) {
+	var result []BoxRow
+	db, err := sql.Open(d.driver, d.name)
+	if err != nil {
+		return result, err
+	}
+	defer db.Close()
+	rows, err := db.Query("SELECT * FROM boxes")
+	if err != nil {
+		return result, err
+	}
+	for rows.Next() {
+		var name string
+		var createTime, minTime, maxTime int64
+		err := rows.Scan(&name, &createTime, &minTime, &maxTime)
+		if err != nil {
+			return result, err
+		}
+		result = append(result, BoxRow{name, createTime, minTime, maxTime})
+	}
+	return result, nil
+}
+
+func (d TBDB) GetSpansForBox(name string) ([]SpanRow, error) {
+	var result []SpanRow
+	db, err := sql.Open(d.driver, d.name)
+	if err != nil {
+		return result, err
+	}
+	defer db.Close()
+	box, err := d.GetBox(name)
+	if err != nil {
+		return result, err
+	}
+	rows, err := db.Query("SELECT * FROM spans WHERE name = ? AND start >= ?", box.name, box.createTime)
+	if err != nil {
+		return result, err
+	}
+	for rows.Next() {
+		var name string
+		var start, end int64
+		err := rows.Scan(&start, &end, &name)
+		if err != nil {
+			return result, err
+		}
+		result = append(result, SpanRow{start, end, name})
+	}
+	return result, nil
+}
+
+// Update functions
+
+func (d TBDB) UpdateBox(name string, minTime, maxTime int64) error {
+	db, err := sql.Open(d.driver, d.name)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	stmt, err := db.Prepare("UPDATE boxes SET minTime = ?, maxTime = ? WHERE name = ?")
+	if err != nil {
+		return err
+	}
+	_, err = stmt.Exec(minTime, maxTime, name)
+	return err
+}
+
+// Delete functions
+
+func (d TBDB) DeleteBox(name string) error {
+	db, err := sql.Open(d.driver, d.name)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	stmt, err := db.Prepare("DELETE FROM boxes WHERE name = ?")
+	_, err = stmt.Exec(name)
+	return err
+}
+
+func (d TBDB) DeleteBoxAndSpans(name string) error {
+	db, err := sql.Open(d.driver, d.name)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	stmt, err := db.Prepare("DELETE FROM boxes WHERE name = ?")
+	_, err = stmt.Exec(name)
+	if err != nil {
+		return err
+	}
+	stmt, err = db.Prepare("DELETE FROM spans WHERE name = ?")
+	_, err = stmt.Exec(name)
+	return err
+}
+
+func (d TBDB) DeleteSpan(start, end int64, name string) error {
+	db, err := sql.Open(d.driver, d.name)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	stmt, err := db.Prepare("DELETE FROM boxes WHERE start = ? AND end = ? AND name = ? ")
+	_, err = stmt.Exec(start, end, name)
+	return err
 }
