@@ -113,10 +113,10 @@ func TestTBDB_GetBox(t *testing.T) {
 				assert.EqualError(t, err, tc.errStr)
 			} else {
 				require.NoError(t, err)
-				assert.Equal(t, tc.name, br.name)
-				assert.Equal(t, tc.minTime, br.minTime)
-				assert.Equal(t, tc.maxTime, br.maxTime)
-				assert.GreaterOrEqual(t, br.createTime, now)
+				assert.Equal(t, tc.name, br.Name)
+				assert.Equal(t, tc.minTime, br.MinTime)
+				assert.Equal(t, tc.maxTime, br.MaxTime)
+				assert.GreaterOrEqual(t, br.CreateTime, now)
 			}
 		})
 	}
@@ -127,7 +127,7 @@ func TestTBDB_GetAllBoxes(t *testing.T) {
 	genBoxes := func(num int) []BoxRow {
 		var boxes []BoxRow
 		for i := 1; i <= num; i++ {
-			boxes = append(boxes, BoxRow{name: fmt.Sprintf("box-%d", i), minTime: 5 * int64(i), maxTime: 7 * int64(i)})
+			boxes = append(boxes, BoxRow{Name: fmt.Sprintf("box-%d", i), MinTime: 5 * int64(i), MaxTime: 7 * int64(i)})
 		}
 		return boxes
 	}
@@ -144,7 +144,7 @@ func TestTBDB_GetAllBoxes(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			tbdb := setup(t)
 			for _, box := range tc.boxes {
-				require.NoError(t, tbdb.AddBox(box.name, box.minTime, box.maxTime))
+				require.NoError(t, tbdb.AddBox(box.Name, box.MinTime, box.MaxTime))
 			}
 			boxes, err := tbdb.GetAllBoxes()
 			if tc.expError {
@@ -153,10 +153,10 @@ func TestTBDB_GetAllBoxes(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, len(tc.boxes), len(boxes))
 				for i := range boxes {
-					assert.Equal(t, tc.boxes[i].name, boxes[i].name)
-					assert.Equal(t, tc.boxes[i].minTime, boxes[i].minTime)
-					assert.Equal(t, tc.boxes[i].maxTime, boxes[i].maxTime)
-					assert.GreaterOrEqual(t, boxes[i].createTime, now)
+					assert.Equal(t, tc.boxes[i].Name, boxes[i].Name)
+					assert.Equal(t, tc.boxes[i].MinTime, boxes[i].MinTime)
+					assert.Equal(t, tc.boxes[i].MaxTime, boxes[i].MaxTime)
+					assert.GreaterOrEqual(t, boxes[i].CreateTime, now)
 				}
 			}
 		})
@@ -175,15 +175,15 @@ func TestTBDB_GetSpansForBox(t *testing.T) {
 		{start.Add(9 * time.Minute).Unix(), start.Add(12 * time.Minute).Unix(), box},
 	}
 	for _, i := range input {
-		require.NoError(t, tbdb.AddSpan(i.start, i.end, i.name))
+		require.NoError(t, tbdb.AddSpan(i.Start, i.End, i.Name))
 	}
 	spans, err := tbdb.GetSpansForBox("box-1")
 	require.NoError(t, err)
 	assert.Equal(t, len(input), len(spans))
 	for i := range input {
-		assert.Equal(t, input[i].start, spans[i].start)
-		assert.Equal(t, input[i].end, spans[i].end)
-		assert.Equal(t, input[i].name, spans[i].name)
+		assert.Equal(t, input[i].Start, spans[i].Start)
+		assert.Equal(t, input[i].End, spans[i].End)
+		assert.Equal(t, input[i].Name, spans[i].Name)
 	}
 	require.NoError(t, tbdb.AddSpan(
 		time.Now().Add(-368*24*time.Hour).Unix(), time.Now().Add(-367*24*time.Hour).Unix(), box))
@@ -202,7 +202,7 @@ func TestTBDB_UpdateBox(t *testing.T) {
 	require.NoError(t, tbdb.UpdateBox(box, 1, 3))
 	br, err := tbdb.GetBox(box)
 	require.NoError(t, err)
-	assert.Equal(t, int64(3), br.maxTime)
+	assert.Equal(t, int64(3), br.MaxTime)
 }
 
 func TestTBDB_DeleteBox(t *testing.T) {

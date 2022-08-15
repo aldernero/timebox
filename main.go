@@ -1,12 +1,7 @@
 package main
 
-import (
-	"github.com/aldernero/timebox/db"
-)
-
-const dbName = "timebox.db"
+import "github.com/aldernero/timebox/tui"
 
 func main() {
-	tdb := db.NewDBWithName(dbName)
-	tdb.Init()
+	tui.StartTea()
 }

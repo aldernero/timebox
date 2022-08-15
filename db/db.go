@@ -18,16 +18,16 @@ type TBDB struct {
 }
 
 type SpanRow struct {
-	start int64
-	end   int64
-	name  string
+	Start int64
+	End   int64
+	Name  string
 }
 
 type BoxRow struct {
-	name       string
-	createTime int64
-	minTime    int64
-	maxTime    int64
+	Name       string
+	CreateTime int64
+	MinTime    int64
+	MaxTime    int64
 }
 
 func NewDBWithName(name string) TBDB {
@@ -227,7 +227,7 @@ func (d TBDB) GetSpansForBox(name string) ([]SpanRow, error) {
 	if err != nil {
 		return result, err
 	}
-	rows, err := db.Query("SELECT * FROM spans WHERE name = ? AND start >= ?", box.name, box.createTime)
+	rows, err := db.Query("SELECT * FROM spans WHERE name = ? AND start >= ?", box.Name, box.CreateTime)
 	if err != nil {
 		return result, err
 	}
