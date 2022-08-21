@@ -5,10 +5,10 @@ import (
 	"time"
 )
 
-type period int
+type Period int
 
 const (
-	Week period = iota
+	Week Period = iota
 	Month
 	Quarter
 	Year
@@ -20,18 +20,6 @@ const (
 	secondsPerHour   = 3600
 	secondsPerMinute = 60
 )
-
-func LastDays(n int) Span {
-	end := time.Now()
-	start := end.Add(time.Duration(-n*24) * time.Hour)
-	return Span{start, end}
-}
-
-func LastWeeks(n int) Span {
-	end := time.Now()
-	start := end.Add(time.Duration(-n*24*7) * time.Hour)
-	return Span{start, end}
-}
 
 // WeekStart calculates the time at the beginning of the week for a given time
 func WeekStart(t time.Time) time.Time {
@@ -47,12 +35,32 @@ func ThisWeekStart() time.Time {
 
 // MonthStart calculates the time at the beginning of the month for a given time
 func MonthStart(t time.Time) time.Time {
-	return time.Date(t.Year(), t.Month(), 0, 0, 0, 0, 0, time.Local)
+	return time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, time.Local)
 }
 
 // ThisMonthStart calculates the time at the beginning of the current month
 func ThisMonthStart() time.Time {
 	return MonthStart(time.Now())
+}
+
+func QuarterStart(t time.Time, fys time.Month) time.Time {
+	y := t.Year()
+	m := int(t.Month())
+	diff := m - int(fys)
+	if diff < 0 {
+		diff *= -1
+	}
+	monthOffset := (3 - diff%3) % 3
+	m -= monthOffset
+	if m < 1 {
+		y--
+		m += 12
+	}
+	return time.Date(y, time.Month(m), 1, 0, 0, 0, 0, time.Local)
+}
+
+func ThisQuarterStart(fys time.Month) time.Time {
+	return QuarterStart(time.Now(), fys)
 }
 
 // YearStart calculates the time at the beginning of the month for a given time
@@ -62,7 +70,7 @@ func YearStart(t time.Time) time.Time {
 
 // ThisMonthStart calculates the time at the beginning of the current month
 func ThisYearStart() time.Time {
-	return MonthStart(time.Now())
+	return YearStart(time.Now())
 }
 
 func DurationParser(d time.Duration) string {
@@ -113,6 +121,33 @@ func MonthSoFar() Span {
 	return Span{ThisMonthStart(), time.Now()}
 }
 
+func QuarterSoFar(fys time.Month) Span {
+	return Span{ThisQuarterStart(fys), time.Now()}
+}
+
 func YearSoFar() Span {
 	return Span{ThisYearStart(), time.Now()}
+}
+
+func PeriodSoFar(p Period, fys time.Month) Span {
+	var result Span
+	switch p {
+	case Week:
+		result = WeekSoFar()
+	case Month:
+		result = MonthSoFar()
+	case Quarter:
+		result = QuarterSoFar(fys)
+	case Year:
+		result = YearSoFar()
+	}
+	return result
+}
+
+func FiscalQuarter(fiscalYearStart, calendarMonth time.Month) int {
+	fm := int(calendarMonth - fiscalYearStart)
+	if fm < 0 {
+		fm += 12
+	}
+	return fm/3 + 1
 }
