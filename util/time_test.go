@@ -95,6 +95,84 @@ func TestQuarterStart(t *testing.T) {
 	}
 }
 
+func TestYearStart(t *testing.T) {
+	tests := map[string]struct {
+		year  int
+		month int
+		day   int
+		hour  int
+		min   int
+		sec   int
+	}{
+		"year start":  {1952, 1, 5, 0, 0, 0},
+		"month start": {2036, 2, 1, 0, 0, 0},
+		"year end":    {1899, 12, 31, 23, 59, 59},
+		"month end":   {2021, 5, 31, 20, 45, 0},
+		"middle":      {1997, 7, 10, 8, 17, 51},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			t1 := time.Date(tc.year, time.Month(tc.month), tc.day, tc.hour, tc.min, tc.sec, 0, time.Local)
+			t2 := YearStart(t1)
+			assert.Equal(t, time.January, t2.Month())
+			assert.Equal(t, 1, t2.Day())
+			assert.Zero(t, t2.Hour())
+			assert.Zero(t, t2.Minute())
+			assert.Zero(t, t2.Second())
+		})
+	}
+}
+
+func TestThisWeekStart(t *testing.T) {
+	now := time.Now()
+	tws := ThisWeekStart()
+	dur := int(now.Sub(tws).Seconds())
+	assert.Equal(t, time.Sunday, tws.Weekday())
+	assert.Zero(t, tws.Hour())
+	assert.Zero(t, tws.Minute())
+	assert.Zero(t, tws.Second())
+	assert.GreaterOrEqual(t, dur, 0)
+	assert.LessOrEqual(t, dur, secondsPerWeek)
+}
+
+func TestThisMonthStart(t *testing.T) {
+	now := time.Now()
+	daysInMonth := now.AddDate(0, 1, -now.Day()).Day()
+	tms := ThisMonthStart()
+	dur := int(now.Sub(tms).Seconds())
+	assert.Equal(t, 1, tms.Day())
+	assert.Zero(t, tms.Hour())
+	assert.Zero(t, tms.Minute())
+	assert.Zero(t, tms.Second())
+	assert.GreaterOrEqual(t, dur, 0)
+	assert.LessOrEqual(t, dur, secondsPerDay*daysInMonth)
+}
+
+func TestThisQuarterStart(t *testing.T) {
+	now := time.Now()
+	tqs := ThisQuarterStart(time.January)
+	dur := int(now.Sub(tqs).Seconds())
+	assert.Equal(t, 1, tqs.Day())
+	assert.Zero(t, tqs.Hour())
+	assert.Zero(t, tqs.Minute())
+	assert.Zero(t, tqs.Second())
+	assert.GreaterOrEqual(t, dur, 0)
+	assert.LessOrEqual(t, dur, secondsPerDay*92)
+}
+
+func TestThisYearStart(t *testing.T) {
+	now := time.Now()
+	tys := ThisYearStart()
+	dur := int(now.Sub(tys).Seconds())
+	assert.Equal(t, 1, tys.Day())
+	assert.Zero(t, tys.Hour())
+	assert.Zero(t, tys.Minute())
+	assert.Zero(t, tys.Second())
+	assert.GreaterOrEqual(t, dur, 0)
+	assert.LessOrEqual(t, dur, secondsPerDay*366)
+}
+
 func TestFiscalQuarter(t *testing.T) {
 	tests := map[string]struct {
 		fiscalYearStart time.Month

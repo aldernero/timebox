@@ -15,7 +15,8 @@ const (
 )
 
 const (
-	secondsPerYear   = 31557600
+	secondsPerYear   = 31557600 // 365.25 days
+	secondsPerWeek   = 604800
 	secondsPerDay    = 86400
 	secondsPerHour   = 3600
 	secondsPerMinute = 60
@@ -65,7 +66,7 @@ func ThisQuarterStart(fys time.Month) time.Time {
 
 // YearStart calculates the time at the beginning of the month for a given time
 func YearStart(t time.Time) time.Time {
-	return time.Date(t.Year(), time.January, 0, 0, 0, 0, 0, time.Local)
+	return time.Date(t.Year(), time.January, 1, 0, 0, 0, 0, time.Local)
 }
 
 // ThisMonthStart calculates the time at the beginning of the current month
