@@ -2,6 +2,7 @@ package util
 
 import (
 	"github.com/aldernero/timebox/db"
+	"time"
 )
 
 type TimeBox struct {
@@ -47,4 +48,12 @@ func (tb TimeBox) GetSpans(span Span) map[string]SpanSet {
 		}
 	}
 	return spans
+}
+
+func (tb TimeBox) AddBox(name string, minTime, maxTime time.Duration) error {
+	return tb.tbdb.AddBox(name, int64(minTime.Seconds()), int64(maxTime.Seconds()))
+}
+
+func (tb TimeBox) AddSpan(name string, start, end time.Time) error {
+	return tb.tbdb.AddSpan(start.Unix(), end.Unix(), name)
 }

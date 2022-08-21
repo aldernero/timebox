@@ -55,6 +55,16 @@ func ThisMonthStart() time.Time {
 	return MonthStart(time.Now())
 }
 
+// YearStart calculates the time at the beginning of the month for a given time
+func YearStart(t time.Time) time.Time {
+	return time.Date(t.Year(), time.January, 0, 0, 0, 0, 0, time.Local)
+}
+
+// ThisMonthStart calculates the time at the beginning of the current month
+func ThisYearStart() time.Time {
+	return MonthStart(time.Now())
+}
+
 func DurationParser(d time.Duration) string {
 	dsec := int(d.Seconds())
 	years := dsec / secondsPerYear
@@ -93,4 +103,16 @@ func Later(t1, t2 time.Time) time.Time {
 		return t1
 	}
 	return t1
+}
+
+func WeekSoFar() Span {
+	return Span{ThisWeekStart(), time.Now()}
+}
+
+func MonthSoFar() Span {
+	return Span{ThisMonthStart(), time.Now()}
+}
+
+func YearSoFar() Span {
+	return Span{ThisYearStart(), time.Now()}
 }
