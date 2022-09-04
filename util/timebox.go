@@ -50,10 +50,23 @@ func (tb TimeBox) GetSpans(span Span) map[string]SpanSet {
 	return spans
 }
 
-func (tb TimeBox) AddBox(name string, minTime, maxTime time.Duration) error {
-	return tb.tbdb.AddBox(name, int64(minTime.Seconds()), int64(maxTime.Seconds()))
+func (tb TimeBox) AddBox(box Box) error {
+	err := tb.tbdb.AddBox(box.Name, int64(box.MinTime.Seconds()), int64(box.MaxTime.Seconds()))
+	if err != nil {
+		return err
+	}
+	tb.Boxes[box.Name] = box
+	return nil
 }
 
 func (tb TimeBox) AddSpan(name string, start, end time.Time) error {
-	return tb.tbdb.AddSpan(start.Unix(), end.Unix(), name)
+	err := tb.tbdb.AddSpan(start.Unix(), end.Unix(), name)
+	if err != nil {
+		return err
+	}
+	if _, ok := tb.Spans[name]; !ok {
+		tb.Spans[name] = SpanSet{}
+	}
+	tb.Spans[name].Add(Span{start, end})
+	return nil
 }

@@ -3,7 +3,9 @@ module github.com/aldernero/timebox
 go 1.19
 
 require (
+	github.com/charmbracelet/bubbles v0.11.0
 	github.com/charmbracelet/bubbletea v0.22.1
+	github.com/charmbracelet/lipgloss v0.5.0
 	github.com/evertras/bubble-table v0.14.5
 	github.com/mattn/go-sqlite3 v1.14.15
 	github.com/stretchr/testify v1.8.0
@@ -11,8 +13,6 @@ require (
 
 require (
 	github.com/atotto/clipboard v0.1.4 // indirect
-	github.com/charmbracelet/bubbles v0.11.0 // indirect
-	github.com/charmbracelet/lipgloss v0.5.0 // indirect
 	github.com/containerd/console v1.0.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
@@ -25,6 +25,7 @@ require (
 	github.com/muesli/termenv v0.11.1-0.20220212125758-44cd13922739 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
+	github.com/sahilm/fuzzy v0.1.0 // indirect
 	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect
