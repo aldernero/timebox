@@ -2,10 +2,16 @@ package tui
 
 import (
 	"fmt"
+	"github.com/aldernero/timebox/tui/constants"
 	"github.com/aldernero/timebox/tui/summaryui"
 	"github.com/aldernero/timebox/util"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"os"
+)
+
+const (
+	logoFile = "assets/timebox.txt"
 )
 
 type sessionState int
@@ -17,6 +23,7 @@ const (
 
 type MainModel struct {
 	state      sessionState
+	period     util.Period
 	timebox    *util.TimeBox
 	summary    summaryui.Model
 	windowSize tea.WindowSizeMsg
@@ -62,5 +69,22 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m MainModel) View() string {
-	return m.summary.View()
+	return lipgloss.JoinVertical(lipgloss.Top, topView(), m.summary.View())
+}
+
+func loadLogo() string {
+	var logo string
+	buf, err := os.ReadFile(logoFile)
+	if err != nil {
+		fmt.Println("Error reading logo file:", err)
+	}
+	logo = string(buf)
+	return logo
+}
+
+func topView() string {
+	var view string
+	logo := loadLogo()
+	view = constants.LogoStyle.Render(logo)
+	return view
 }

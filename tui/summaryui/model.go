@@ -2,103 +2,16 @@ package summaryui
 
 import (
 	"fmt"
+	"github.com/aldernero/timebox/tui/constants"
 	"github.com/aldernero/timebox/util"
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/evertras/bubble-table/table"
 	"os"
 	"strings"
 	"time"
 )
-
-const (
-	defaultListWidth   = 28
-	defaultDetailWidth = 45
-	defaultInputWidth  = 22
-	inputTimeFormShort = "2006-01-02"
-	inputTimeFormLong  = "2006-01-02 15:04:05"
-	cError             = "#CF002E"
-	cItemTitleDark     = "#F5EB6D"
-	cItemTitleLight    = "#F3B512"
-	cItemDescDark      = "#9E9742"
-	cItemDescLight     = "#FFD975"
-	cTitle             = "#2389D3"
-	cDetailTitle       = "#D32389"
-	cPromptBorder      = "#D32389"
-	cDimmedTitleDark   = "#DDDDDD"
-	cDimmedTitleLight  = "#222222"
-	cDimmedDescDark    = "#999999"
-	cDimmedDescLight   = "#555555"
-	cTextLightGray     = "#FFFDF5"
-)
-
-var AppStyle = lipgloss.NewStyle().Margin(0, 1)
-var TitleStyle = lipgloss.NewStyle().
-	Foreground(lipgloss.Color(cTextLightGray)).
-	Background(lipgloss.Color(cTitle)).
-	Padding(0, 1)
-var DetailTitleStyle = lipgloss.NewStyle().
-	Width(defaultDetailWidth).
-	Foreground(lipgloss.Color(cTextLightGray)).
-	Background(lipgloss.Color(cDetailTitle)).
-	Padding(0, 1).
-	Align(lipgloss.Center)
-var InputTitleStyle = lipgloss.NewStyle().
-	Width(defaultInputWidth).
-	Foreground(lipgloss.Color(cTextLightGray)).
-	Background(lipgloss.Color(cDetailTitle)).
-	Padding(0, 1).
-	Align(lipgloss.Center)
-var SelectedTitle = lipgloss.NewStyle().
-	Border(lipgloss.NormalBorder(), false, false, false, true).
-	BorderForeground(lipgloss.AdaptiveColor{Light: cItemTitleLight, Dark: cItemTitleDark}).
-	Foreground(lipgloss.AdaptiveColor{Light: cItemTitleLight, Dark: cItemTitleDark}).
-	Padding(0, 0, 0, 1)
-var SelectedDesc = SelectedTitle.Copy().
-	Foreground(lipgloss.AdaptiveColor{Light: cItemDescLight, Dark: cItemDescDark})
-var DimmedTitle = lipgloss.NewStyle().
-	Foreground(lipgloss.AdaptiveColor{Light: cDimmedTitleLight, Dark: cDimmedTitleDark}).
-	Padding(0, 0, 0, 2)
-var DimmedDesc = DimmedTitle.Copy().
-	Foreground(lipgloss.AdaptiveColor{Light: cDimmedDescDark, Dark: cDimmedDescLight})
-var InputStyle = lipgloss.NewStyle().
-	Margin(1, 1).
-	Padding(1, 2).
-	Border(lipgloss.RoundedBorder(), true, true, true, true).
-	BorderForeground(lipgloss.Color(cPromptBorder)).
-	Render
-var DetailStyle = lipgloss.NewStyle().
-	Padding(1, 2).
-	Border(lipgloss.ThickBorder(), false, false, false, true).
-	BorderForeground(lipgloss.AdaptiveColor{Light: cItemTitleLight, Dark: cItemTitleDark}).
-	Render
-var ErrStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(cError)).Render
-var NoStyle = lipgloss.NewStyle()
-var FocusedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(cPromptBorder))
-var BlurredStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
-var BrightTextStyle = lipgloss.NewStyle().
-	Foreground(lipgloss.AdaptiveColor{Light: cDimmedTitleLight, Dark: cDimmedTitleDark}).Render
-var NormalTextStyle = lipgloss.NewStyle().
-	Foreground(lipgloss.AdaptiveColor{Light: cDimmedDescLight, Dark: cDimmedDescDark}).Render
-var SpecialTextStyle = lipgloss.NewStyle().
-	Width(defaultDetailWidth).
-	Margin(0, 0, 1, 0).
-	Foreground(lipgloss.AdaptiveColor{Light: cItemTitleLight, Dark: cItemTitleDark}).
-	Align(lipgloss.Center).Render
-var DetailsBlockLeft = lipgloss.NewStyle().
-	Width(defaultDetailWidth / 2).
-	Foreground(lipgloss.AdaptiveColor{Light: cDimmedTitleLight, Dark: cDimmedTitleDark}).
-	Align(lipgloss.Right).
-	Render
-var DetailsBlockRight = lipgloss.NewStyle().
-	Width(defaultDetailWidth / 2).
-	Foreground(lipgloss.AdaptiveColor{Light: cDimmedDescLight, Dark: cDimmedDescDark}).
-	Align(lipgloss.Left).
-	Render
-var HelpStyle = list.DefaultStyles().HelpStyle.Width(defaultListWidth).Height(5)
 
 type mode int
 
@@ -180,8 +93,8 @@ func New(tb *util.TimeBox) Model {
 		case 0:
 			t.Placeholder = "Box Name"
 			t.Focus()
-			t.PromptStyle = FocusedStyle
-			t.TextStyle = FocusedStyle
+			t.PromptStyle = constants.FocusedStyle
+			t.TextStyle = constants.FocusedStyle
 		case 1:
 			t.Placeholder = "Min Duration"
 			t.CharLimit = 30
@@ -302,7 +215,7 @@ func (m Model) View() string {
 
 func (m Model) inputView() string {
 	var b strings.Builder
-	b.WriteString(InputTitleStyle.Render("New Box") + "\n")
+	b.WriteString(constants.InputTitleStyle.Render("New Box") + "\n")
 	for i := range m.inputs {
 		b.WriteString(m.inputs[i].View())
 		if i < len(m.inputs)-1 {
@@ -310,27 +223,27 @@ func (m Model) inputView() string {
 		}
 	}
 
-	cancelButton := &BlurredStyle
+	cancelButton := &constants.BlurredStyle
 	if m.focus == len(m.inputs) {
-		cancelButton = &FocusedStyle
+		cancelButton = &constants.FocusedStyle
 	}
-	submitButton := &BlurredStyle
+	submitButton := &constants.BlurredStyle
 	if m.focus == len(m.inputs)+1 {
-		submitButton = &FocusedStyle
+		submitButton = &constants.FocusedStyle
 	}
 	_, err := fmt.Fprintf(
 		&b,
 		"\n\n%s  %s\n\n%s",
 		cancelButton.Render("[ Cancel ]"),
 		submitButton.Render("[ Submit ]"),
-		ErrStyle(m.inputStatus),
+		constants.ErrStyle(m.inputStatus),
 	)
 	if err != nil {
 		fmt.Printf("Error formatting input string: %v\n", err)
 		os.Exit(1)
 	}
 
-	return InputStyle(b.String())
+	return constants.InputStyle(b.String())
 }
 
 func (m *Model) updateInputs() []tea.Cmd {
@@ -339,14 +252,14 @@ func (m *Model) updateInputs() []tea.Cmd {
 		if i == m.focus {
 			// Set focused state
 			cmds[i] = m.inputs[i].Focus()
-			m.inputs[i].PromptStyle = FocusedStyle
-			m.inputs[i].TextStyle = FocusedStyle
+			m.inputs[i].PromptStyle = constants.FocusedStyle
+			m.inputs[i].TextStyle = constants.FocusedStyle
 			continue
 		}
 		// Remove focused state
 		m.inputs[i].Blur()
-		m.inputs[i].PromptStyle = NoStyle
-		m.inputs[i].TextStyle = NoStyle
+		m.inputs[i].PromptStyle = constants.NoStyle
+		m.inputs[i].TextStyle = constants.NoStyle
 	}
 	return cmds
 }

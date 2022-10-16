@@ -1,6 +1,7 @@
 package summaryui
 
 import (
+	"github.com/aldernero/timebox/tui/constants"
 	"github.com/aldernero/timebox/util"
 	"github.com/evertras/bubble-table/table"
 	"time"
@@ -13,7 +14,6 @@ const (
 	columnKeyUse   = "use"
 	columnWidthBox = 15
 	columnWidthDur = 10
-	tablePageSize  = 6
 )
 
 func makeRow(box string, min, max, use time.Duration) table.Row {
@@ -39,6 +39,7 @@ func makeTable(tb *util.TimeBox) table.Model {
 		table.NewColumn(columnKeyUse, "Used", columnWidthDur),
 	}).WithRows(rows).
 		BorderRounded().
-		WithPageSize(tablePageSize).
+		WithBaseStyle(constants.TableStyle).
+		WithPageSize(constants.SummaryPageSize).
 		Focused(true)
 }
