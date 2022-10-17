@@ -81,9 +81,9 @@ type Model struct {
 	timebox     *util.TimeBox
 }
 
-func New(tb *util.TimeBox) Model {
+func New(tb *util.TimeBox, p util.Period) Model {
 	var m Model
-	m.when = util.Week
+	m.when = p
 	m.inputs = make([]textinput.Model, 3)
 	var t textinput.Model
 	for i := range m.inputs {
@@ -105,7 +105,7 @@ func New(tb *util.TimeBox) Model {
 		m.inputs[i] = t
 	}
 	m.timebox = tb
-	m.sumTable = makeTable(m.timebox)
+	m.sumTable = makeTable(m.timebox, p)
 	return m
 }
 
@@ -180,7 +180,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						break
 					}
 					//newTable, newCmd := m.sumTable.Update(msg)
-					m.sumTable = makeTable(m.timebox)
+					m.sumTable = makeTable(m.timebox, m.when)
 					//cmd = newCmd
 					m.resetInputs()
 					m.mode = nav

@@ -5,9 +5,11 @@ import (
 	"github.com/aldernero/timebox/tui/constants"
 	"github.com/aldernero/timebox/tui/summaryui"
 	"github.com/aldernero/timebox/util"
+	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"os"
+	"strings"
 )
 
 const (
@@ -23,14 +25,14 @@ const (
 
 type MainModel struct {
 	state      sessionState
-	period     util.Period
+	period     util.TimePeriod
 	timebox    *util.TimeBox
 	summary    summaryui.Model
 	windowSize tea.WindowSizeMsg
 }
 
 func New(tb *util.TimeBox) MainModel {
-	model := MainModel{state: summaryView, timebox: tb, summary: summaryui.New(tb)}
+	model := MainModel{state: summaryView, timebox: tb, summary: summaryui.New(tb, util.Week)}
 	return model
 }
 
@@ -43,6 +45,32 @@ func StartTea(tb *util.TimeBox) {
 	}
 }
 
+type keymap struct {
+	left  key.Binding
+	right key.Binding
+	boxes key.Binding
+	spans key.Binding
+	quit  key.Binding
+}
+
+var Keymap = keymap{
+	left: key.NewBinding(
+		key.WithKeys("left"),
+	),
+	right: key.NewBinding(
+		key.WithKeys("right"),
+	),
+	boxes: key.NewBinding(
+		key.WithKeys("b"),
+	),
+	spans: key.NewBinding(
+		key.WithKeys("s"),
+	),
+	quit: key.NewBinding(
+		key.WithKeys("q", "ctrl+c"),
+	),
+}
+
 func (m MainModel) Init() tea.Cmd {
 	return nil
 }
@@ -53,6 +81,21 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.windowSize = msg
+	case tea.KeyMsg:
+		switch {
+		case key.Matches(msg, Keymap.left):
+			m.period.Previous()
+			m.summary = summaryui.New(m.timebox, m.period.Period)
+		case key.Matches(msg, Keymap.right):
+			m.period.Next()
+			m.summary = summaryui.New(m.timebox, m.period.Period)
+		case key.Matches(msg, Keymap.boxes):
+			m.state = summaryView
+		case key.Matches(msg, Keymap.spans):
+			m.state = detailView
+		case key.Matches(msg, Keymap.quit):
+			return m, tea.Quit
+		}
 	}
 	switch m.state {
 	case summaryView:
@@ -69,7 +112,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m MainModel) View() string {
-	return lipgloss.JoinVertical(lipgloss.Top, topView(), m.summary.View())
+	return lipgloss.JoinVertical(lipgloss.Top, topView(), m.summary.View(), m.periodView())
 }
 
 func loadLogo() string {
@@ -87,4 +130,18 @@ func topView() string {
 	logo := loadLogo()
 	view = constants.LogoStyle.Render(logo)
 	return view
+}
+
+func (m MainModel) periodView() string {
+	var b strings.Builder
+	names := m.period.Names()
+	current := m.period.Current()
+	for i, name := range names {
+		if i == current {
+			b.WriteString(constants.CurrentPeriodStyle.Render(name))
+		} else {
+			b.WriteString(constants.PeriodStyle.Render(name))
+		}
+	}
+	return constants.PeriodPickerStyle.Render(b.String())
 }

@@ -16,11 +16,8 @@ func NewTimeBox(dbname string) *TimeBox {
 	var tb TimeBox
 	tb.tbdb = db.NewDBWithName(dbname)
 	tb.tbdb.Init()
-	tb.Boxes = AllBoxesFromDB(tb.tbdb)
+	tb.Names, tb.Boxes = AllBoxesFromDB(tb.tbdb)
 	tb.Spans = AllSpansFromDB(tb.tbdb)
-	for key, _ := range tb.Boxes {
-		tb.Names = append(tb.Names, key)
-	}
 	return &tb
 }
 

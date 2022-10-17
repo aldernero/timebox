@@ -20,7 +20,31 @@ const (
 	secondsPerDay    = 86400
 	secondsPerHour   = 3600
 	secondsPerMinute = 60
+	monthsPerWeek    = 0.2301 // estimate for faster calculation
+	quartersPerWeek  = 0.0767 // estimate for faster calculation
+	yearsPerWeek     = 0.0192 // estimate for faster calculation
 )
+
+type TimePeriod struct {
+	Period
+}
+
+func (t TimePeriod) Names() []string {
+	names := []string{"Week", "Month", "Quarter", "Year"}
+	return names
+}
+
+func (t TimePeriod) Current() int {
+	return int(t.Period)
+}
+
+func (t *TimePeriod) Next() {
+	t.Period = (t.Period + 1) % 4
+}
+
+func (t *TimePeriod) Previous() {
+	t.Period = (t.Period + 3) % 4
+}
 
 // WeekStart calculates the time at the beginning of the week for a given time
 func WeekStart(t time.Time) time.Time {
