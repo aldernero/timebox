@@ -22,6 +22,7 @@ const (
 	ColorPeriodHighlight  = "#DE3E93"
 	ColorHelpText         = "#ABABAB"
 	ColorShortcuts        = "#47A4AC"
+	ColorSession          = "#FFDF80"
 )
 
 var LogoStyle = lipgloss.NewStyle().
@@ -55,7 +56,7 @@ var CurrentPeriodStyle = lipgloss.NewStyle().
 	Background(lipgloss.Color(ColorPeriodHighlight)).
 	Padding(0, 1)
 var PeriodPickerStyle = lipgloss.NewStyle().
-	Padding(0, 1).
+	PaddingRight(1).
 	Align(lipgloss.Right)
 var HelpStyle = lipgloss.NewStyle().
 	Foreground(lipgloss.Color(ColorHelpText)).
@@ -63,6 +64,14 @@ var HelpStyle = lipgloss.NewStyle().
 var ShortcutStyle = lipgloss.NewStyle().
 	Foreground(lipgloss.Color(ColorShortcuts)).
 	Padding(0, 1)
+var SessionShortcutStyle = lipgloss.NewStyle().
+	Foreground(lipgloss.Color(ColorSession))
+var SessionSelectedStyle = lipgloss.NewStyle().
+	Foreground(lipgloss.Color(ColorPeriodForeground)).
+	Background(lipgloss.Color(ColorSession))
+var SessionTextStyle = lipgloss.NewStyle().
+	Foreground(lipgloss.Color(ColorHelpText)).
+	PaddingRight(2)
 var HelpBlockStyle = lipgloss.NewStyle().
 	PaddingLeft(8).
 	PaddingRight(1)

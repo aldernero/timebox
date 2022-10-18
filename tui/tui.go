@@ -113,7 +113,12 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m MainModel) View() string {
 	top := lipgloss.JoinHorizontal(lipgloss.Center, topView(), helpView())
-	return lipgloss.JoinVertical(lipgloss.Left, top, m.summary.View(), m.periodView())
+	session := sessionView()
+	lw := lipgloss.Width(session)
+	rw := constants.TUIWidth - lw - 1
+	period := lipgloss.NewStyle().Width(rw).Align(lipgloss.Right).Render(m.periodView())
+	bottom := lipgloss.JoinHorizontal(lipgloss.Top, session, period)
+	return lipgloss.JoinVertical(lipgloss.Left, top, m.summary.View(), bottom)
 }
 
 func loadLogo() string {
@@ -168,11 +173,11 @@ func sessionView() string {
 	view = lipgloss.JoinHorizontal(
 		lipgloss.Top,
 		lipgloss.JoinHorizontal(
-			lipgloss.Top, constants.ShortcutStyle.Render("<b>"), constants.HelpStyle.Render("Boxes")),
+			lipgloss.Top, constants.SessionShortcutStyle.Render("<b> "), constants.SessionTextStyle.Render("Boxes")),
 		lipgloss.JoinHorizontal(
-			lipgloss.Top, constants.ShortcutStyle.Render("<s>"), constants.HelpStyle.Render("Spans")),
+			lipgloss.Top, constants.SessionShortcutStyle.Render("<s> "), constants.SessionTextStyle.Render("Spans")),
 		lipgloss.JoinHorizontal(
-			lipgloss.Top, constants.ShortcutStyle.Render("<t>"), constants.HelpStyle.Render("Timeline")),
+			lipgloss.Top, constants.SessionShortcutStyle.Render("<t> "), constants.SessionTextStyle.Render("Timeline")),
 	)
-	return view
+	return lipgloss.NewStyle().PaddingLeft(1).Render(view)
 }
