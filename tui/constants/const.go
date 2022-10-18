@@ -20,6 +20,8 @@ const (
 	ColorTableText        = "#BAEBDA"
 	ColorPeriodForeground = "#BAEBDA"
 	ColorPeriodHighlight  = "#DE3E93"
+	ColorHelpText         = "#ABABAB"
+	ColorShortcuts        = "#47A4AC"
 )
 
 var LogoStyle = lipgloss.NewStyle().
@@ -53,6 +55,14 @@ var CurrentPeriodStyle = lipgloss.NewStyle().
 	Background(lipgloss.Color(ColorPeriodHighlight)).
 	Padding(0, 1)
 var PeriodPickerStyle = lipgloss.NewStyle().
-	Width(TUIWidth).
 	Padding(0, 1).
 	Align(lipgloss.Right)
+var HelpStyle = lipgloss.NewStyle().
+	Foreground(lipgloss.Color(ColorHelpText)).
+	Padding(0, 1)
+var ShortcutStyle = lipgloss.NewStyle().
+	Foreground(lipgloss.Color(ColorShortcuts)).
+	Padding(0, 1)
+var HelpBlockStyle = lipgloss.NewStyle().
+	PaddingLeft(8).
+	PaddingRight(1)
