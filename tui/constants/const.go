@@ -6,14 +6,14 @@ import (
 
 const (
 	TUIWidth              = 79
-	defaultInputWidth     = 22
+	defaultInputWidth     = 28
 	SummaryPageSize       = 10
 	DetailPageSize        = 16
 	inputTimeFormShort    = "2006-01-02"
 	inputTimeFormLong     = "2006-01-02 15:04:05"
 	ColorError            = "#CF002E"
-	ColorDetailTitle      = "#D32389"
-	ColorPromptBorder     = "#D32389"
+	ColorDetailTitle      = "#DE3E93"
+	ColorPromptBorder     = "#DE3E93"
 	ColorTextLightGray    = "#FFFDF5"
 	ColorLogo             = "#FFDF80"
 	ColorTableBorder      = "#47A4AC"
@@ -44,10 +44,13 @@ var InputStyle = lipgloss.NewStyle().
 	Border(lipgloss.RoundedBorder(), true, true, true, true).
 	BorderForeground(lipgloss.Color(ColorPromptBorder)).
 	Render
+var PromptStyle = lipgloss.NewStyle().
+	Width(TUIWidth).
+	Align(lipgloss.Center)
 var ErrStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(ColorError)).Render
 var NoStyle = lipgloss.NewStyle()
 var FocusedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(ColorPromptBorder))
-var BlurredStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+var BlurredStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(ColorTableText))
 var PeriodStyle = lipgloss.NewStyle().
 	Foreground(lipgloss.Color(ColorPeriodForeground)).
 	Padding(0, 1)

@@ -67,7 +67,7 @@ var Keymap = keymap{
 		key.WithKeys("s"),
 	),
 	quit: key.NewBinding(
-		key.WithKeys("q", "ctrl+c"),
+		key.WithKeys("ctrl+c"),
 	),
 }
 
@@ -112,7 +112,9 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m MainModel) View() string {
-	top := lipgloss.JoinHorizontal(lipgloss.Center, topView(), helpView())
+	var help string
+	help = m.summary.Help()
+	top := lipgloss.JoinHorizontal(lipgloss.Center, topView(), help)
 	session := sessionView()
 	lw := lipgloss.Width(session)
 	rw := constants.TUIWidth - lw - 1
@@ -150,22 +152,6 @@ func (m MainModel) periodView() string {
 		}
 	}
 	return constants.PeriodPickerStyle.Render(b.String())
-}
-
-func helpView() string {
-	var view string
-	view = lipgloss.JoinVertical(
-		lipgloss.Left,
-		lipgloss.JoinHorizontal(
-			lipgloss.Top, constants.ShortcutStyle.Render("<a>     "), constants.HelpStyle.Render("Add")),
-		lipgloss.JoinHorizontal(
-			lipgloss.Top, constants.ShortcutStyle.Render("<ctrl-d>"), constants.HelpStyle.Render("Delete")),
-		lipgloss.JoinHorizontal(
-			lipgloss.Top, constants.ShortcutStyle.Render("<e>     "), constants.HelpStyle.Render("Edit")),
-		lipgloss.JoinHorizontal(
-			lipgloss.Top, constants.ShortcutStyle.Render("<q>     "), constants.HelpStyle.Render("Quit")),
-	)
-	return constants.HelpBlockStyle.Render(view)
 }
 
 func sessionView() string {

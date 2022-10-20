@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/evertras/bubble-table/table"
 	"os"
 	"strings"
@@ -88,6 +89,8 @@ func New(tb *util.TimeBox, p util.Period) Model {
 	var t textinput.Model
 	for i := range m.inputs {
 		t = textinput.New()
+		t.PromptStyle = constants.NoStyle
+		t.CursorStyle = constants.NoStyle
 		t.CharLimit = 30
 		switch i {
 		case 0:
@@ -96,10 +99,10 @@ func New(tb *util.TimeBox, p util.Period) Model {
 			t.PromptStyle = constants.FocusedStyle
 			t.TextStyle = constants.FocusedStyle
 		case 1:
-			t.Placeholder = "Min Duration"
+			t.Placeholder = "Weekly Min (e.g. 1h30m)"
 			t.CharLimit = 30
 		case 2:
-			t.Placeholder = "Max Duration"
+			t.Placeholder = "Weekly Max (e.g. 4h)"
 			t.CharLimit = 30
 		}
 		m.inputs[i] = t
@@ -213,6 +216,28 @@ func (m Model) View() string {
 	}
 }
 
+func (m Model) Help() string {
+	var view string
+	switch m.mode {
+	case nav:
+		view = lipgloss.JoinVertical(
+			lipgloss.Left,
+			lipgloss.JoinHorizontal(
+				lipgloss.Top, constants.ShortcutStyle.Render("<a>     "), constants.HelpStyle.Render("Add")),
+			lipgloss.JoinHorizontal(
+				lipgloss.Top, constants.ShortcutStyle.Render("<ctrl-d>"), constants.HelpStyle.Render("Delete")),
+			lipgloss.JoinHorizontal(
+				lipgloss.Top, constants.ShortcutStyle.Render("<e>     "), constants.HelpStyle.Render("Edit")),
+			lipgloss.JoinHorizontal(
+				lipgloss.Top, constants.ShortcutStyle.Render("<ctrl-c>"), constants.HelpStyle.Render("Quit")),
+		)
+	default:
+		view = lipgloss.JoinHorizontal(
+			lipgloss.Top, constants.ShortcutStyle.Render("<ctrl-c>"), constants.HelpStyle.Render("Quit"))
+	}
+	return constants.HelpBlockStyle.Render(view)
+}
+
 func (m Model) inputView() string {
 	var b strings.Builder
 	b.WriteString(constants.InputTitleStyle.Render("New Box") + "\n")
@@ -243,7 +268,7 @@ func (m Model) inputView() string {
 		os.Exit(1)
 	}
 
-	return constants.InputStyle(b.String())
+	return constants.PromptStyle.Render(constants.InputStyle(b.String()))
 }
 
 func (m *Model) updateInputs() []tea.Cmd {
