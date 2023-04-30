@@ -3,7 +3,7 @@ package tui
 import (
 	"fmt"
 	"github.com/aldernero/timebox/tui/constants"
-	"github.com/aldernero/timebox/tui/summaryui"
+	"github.com/aldernero/timebox/tui/tableui"
 	"github.com/aldernero/timebox/util"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
@@ -19,20 +19,27 @@ const (
 type sessionState int
 
 const (
-	summaryView sessionState = iota
-	detailView
+	boxSummary sessionState = iota
+	boxView
+	boxAdd
+	boxEdit
+	boxDelete
+	timeline
+	timeAdd
+	timeEdit
+	timeDelete
 )
 
 type MainModel struct {
 	state      sessionState
 	period     util.TimePeriod
 	timebox    *util.TimeBox
-	summary    summaryui.Model
+	summary    tableui.Model
 	windowSize tea.WindowSizeMsg
 }
 
 func New(tb *util.TimeBox) MainModel {
-	model := MainModel{state: summaryView, timebox: tb, summary: summaryui.New(tb, util.Week)}
+	model := MainModel{state: boxSummary, timebox: tb, summary: tableui.New(tb, util.Week)}
 	return model
 }
 
@@ -82,30 +89,30 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.windowSize = msg
 	case tea.KeyMsg:
-		switch {
-		case key.Matches(msg, Keymap.left):
-			m.period.Previous()
-			m.summary = summaryui.New(m.timebox, m.period.Period)
-		case key.Matches(msg, Keymap.right):
-			m.period.Next()
-			m.summary = summaryui.New(m.timebox, m.period.Period)
-		case key.Matches(msg, Keymap.boxes):
-			m.state = summaryView
-		case key.Matches(msg, Keymap.spans):
-			m.state = detailView
-		case key.Matches(msg, Keymap.quit):
+		switch msg.String() {
+		case "ctrl+c":
 			return m, tea.Quit
 		}
 	}
 	switch m.state {
-	case summaryView:
-		newSummary, newCmd := m.summary.Update(msg)
-		newModel, ok := newSummary.(summaryui.Model)
-		if !ok {
-			panic("couldn't perform assertion on summaryui model")
-		}
-		m.summary = newModel
-		cmd = newCmd
+	case boxSummary:
+		break
+	case boxView:
+		break
+	case boxAdd:
+		break
+	case boxEdit:
+		break
+	case boxDelete:
+		break
+	case timeline:
+		break
+	case timeAdd:
+		break
+	case timeEdit:
+		break
+	case timeDelete:
+		break
 	}
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
@@ -160,8 +167,6 @@ func sessionView() string {
 		lipgloss.Top,
 		lipgloss.JoinHorizontal(
 			lipgloss.Top, constants.SessionShortcutStyle.Render("<b> "), constants.SessionTextStyle.Render("Boxes")),
-		lipgloss.JoinHorizontal(
-			lipgloss.Top, constants.SessionShortcutStyle.Render("<s> "), constants.SessionTextStyle.Render("Spans")),
 		lipgloss.JoinHorizontal(
 			lipgloss.Top, constants.SessionShortcutStyle.Render("<t> "), constants.SessionTextStyle.Render("Timeline")),
 	)

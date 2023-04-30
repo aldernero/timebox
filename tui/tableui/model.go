@@ -1,4 +1,4 @@
-package summaryui
+package tableui
 
 import (
 	"fmt"
