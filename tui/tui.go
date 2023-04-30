@@ -120,7 +120,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m MainModel) View() string {
 	var help string
-	help = m.summary.Help()
+	help = ""
 	top := lipgloss.JoinHorizontal(lipgloss.Center, topView(), help)
 	session := sessionView()
 	lw := lipgloss.Width(session)

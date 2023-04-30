@@ -243,6 +243,29 @@ func (d TBDB) GetSpansForBox(name string) ([]SpanRow, error) {
 	return result, nil
 }
 
+func (d TBDB) GetSpansForTimeRange(start, end int64) ([]SpanRow, error) {
+	var result []SpanRow
+	db, err := sql.Open(d.driver, d.name)
+	if err != nil {
+		return result, err
+	}
+	defer db.Close()
+	rows, err := db.Query("SELECT * FROM spans WHERE start >= ? AND end <= ? ORDER BY start ASC", start, end)
+	if err != nil {
+		return result, err
+	}
+	for rows.Next() {
+		var name string
+		var start, end int64
+		err := rows.Scan(&start, &end, &name)
+		if err != nil {
+			return result, err
+		}
+		result = append(result, SpanRow{start, end, name})
+	}
+	return result, nil
+}
+
 // Update functions
 
 func (d TBDB) UpdateBox(name string, minTime, maxTime int64) error {

@@ -139,19 +139,19 @@ func Later(t1, t2 time.Time) time.Time {
 }
 
 func WeekSoFar() Span {
-	return Span{ThisWeekStart(), time.Now()}
+	return Span{Start: ThisWeekStart(), End: time.Now()}
 }
 
 func MonthSoFar() Span {
-	return Span{ThisMonthStart(), time.Now()}
+	return Span{Start: ThisMonthStart(), End: time.Now()}
 }
 
 func QuarterSoFar(fys time.Month) Span {
-	return Span{ThisQuarterStart(fys), time.Now()}
+	return Span{Start: ThisQuarterStart(fys), End: time.Now()}
 }
 
 func YearSoFar() Span {
-	return Span{ThisYearStart(), time.Now()}
+	return Span{Start: ThisYearStart(), End: time.Now()}
 }
 
 func PeriodSoFar(p Period, fys time.Month) Span {
