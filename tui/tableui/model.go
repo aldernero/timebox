@@ -4,6 +4,7 @@ import (
 	"github.com/aldernero/timebox/util"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/evertras/bubble-table/table"
+	"time"
 )
 
 type mode int
@@ -19,26 +20,33 @@ type Model struct {
 	boxName string
 	tp      util.Period
 	tb      *util.TimeBox
-	table   table.Model
+	tbl     table.Model
 }
 
-func New(tb *util.TimeBox, period util.Period) Model {
-	return Model{mode: boxSummary, tp: period, tb: tb, table: makeBoxSummaryTable(tb, period)}
+func NewBoxSummary(tb *util.TimeBox, period util.Period) Model {
+	return Model{mode: boxSummary, tp: period, tb: tb, tbl: makeBoxSummaryTable(tb, period)}
 }
 
-func (m Model) SetBoxSummary() {
-	m.mode = boxSummary
-	m.boxName = ""
+func NewBoxView(tb *util.TimeBox, period util.Period, boxName string) Model {
+	return Model{mode: boxView, boxName: boxName, tp: period, tb: tb, tbl: makeBoxViewTable(tb, period, boxName)}
 }
 
-func (m Model) SetBoxView(boxName string) {
-	m.mode = boxView
-	m.boxName = boxName
+func NewTimeline(tb *util.TimeBox, period util.Period) Model {
+	return Model{mode: timeline, tp: period, tb: tb, tbl: makeTimelineTable(tb, period)}
 }
 
-func (m Model) SetTimeline() {
-	m.mode = timeline
-	m.boxName = ""
+func (m Model) GetSelectedBoxName() string {
+	row := m.tbl.HighlightedRow()
+	data := row.Data[columnKeyBox].(string)
+	return data
+}
+
+func (m Model) GetSelectedSpan() util.Span {
+	row := m.tbl.HighlightedRow()
+	box := row.Data[columnKeyBox].(string)
+	start := row.Data[columnKeyStart].(time.Time)
+	end := row.Data[columnKeyEnd].(time.Time)
+	return util.Span{Start: start, End: end, Name: box}
 }
 
 func (m Model) Init() tea.Cmd {
@@ -52,11 +60,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case modeChangedMsg:
 		switch m.mode {
 		case boxSummary:
-			m.table = makeBoxSummaryTable(m.tb, m.tp)
+			m.tbl = makeBoxSummaryTable(m.tb, m.tp)
 		case boxView:
-			m.table = makeBoxViewTable(m.tb, m.tp, m.boxName)
+			m.tbl = makeBoxViewTable(m.tb, m.tp, m.boxName)
 		case timeline:
-			m.table = makeTimelineTable(m.tb, m.tp)
+			m.tbl = makeTimelineTable(m.tb, m.tp)
 		}
 	}
 	cmds = append(cmds, cmd)
@@ -64,5 +72,5 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	return m.table.View()
+	return m.tbl.View()
 }

@@ -5,7 +5,6 @@ import (
 	"github.com/aldernero/timebox/tui/constants"
 	"github.com/aldernero/timebox/tui/tableui"
 	"github.com/aldernero/timebox/util"
-	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"os"
@@ -30,16 +29,28 @@ const (
 	timeDelete
 )
 
+type action int
+
+const (
+	none action = iota
+	addItem
+	editItem
+	deleteItem
+	reload
+)
+
 type MainModel struct {
 	state      sessionState
+	prevState  sessionState
+	action     action
 	period     util.TimePeriod
 	timebox    *util.TimeBox
-	summary    tableui.Model
+	tbl        tableui.Model
 	windowSize tea.WindowSizeMsg
 }
 
 func New(tb *util.TimeBox) MainModel {
-	model := MainModel{state: boxSummary, timebox: tb, summary: tableui.New(tb, util.Week)}
+	model := MainModel{state: boxSummary, timebox: tb, tbl: tableui.NewBoxSummary(tb, util.Week)}
 	return model
 }
 
@@ -52,32 +63,6 @@ func StartTea(tb *util.TimeBox) {
 	}
 }
 
-type keymap struct {
-	left  key.Binding
-	right key.Binding
-	boxes key.Binding
-	spans key.Binding
-	quit  key.Binding
-}
-
-var Keymap = keymap{
-	left: key.NewBinding(
-		key.WithKeys("left"),
-	),
-	right: key.NewBinding(
-		key.WithKeys("right"),
-	),
-	boxes: key.NewBinding(
-		key.WithKeys("b"),
-	),
-	spans: key.NewBinding(
-		key.WithKeys("s"),
-	),
-	quit: key.NewBinding(
-		key.WithKeys("ctrl+c"),
-	),
-}
-
 func (m MainModel) Init() tea.Cmd {
 	return nil
 }
@@ -85,20 +70,101 @@ func (m MainModel) Init() tea.Cmd {
 func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
+	m.prevState = m.state
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.windowSize = msg
+		m.action = none
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "ctrl+c":
+		switch msg.Type {
+		case tea.KeyCtrlC:
 			return m, tea.Quit
+		case tea.KeyLeft:
+			m.period.Previous()
+			m.action = reload
+		case tea.KeyRight:
+			m.period.Next()
+			m.action = reload
+		case tea.KeyEnter:
+			if m.state == boxSummary {
+				m.state = boxView
+				m.action = reload
+			}
+		case tea.KeyEsc:
+			if m.state == boxView {
+				m.state = boxSummary
+				m.action = reload
+			}
+		case tea.KeyCtrlD:
+			switch m.state {
+			case boxSummary:
+				m.state = boxDelete
+				m.action = deleteItem
+			case boxView:
+				m.state = timeDelete
+				m.action = deleteItem
+			case timeline:
+				m.state = timeDelete
+				m.action = deleteItem
+			}
+		case tea.KeyRunes:
+			switch string(msg.Runes) {
+			case "b":
+				m.state = boxSummary
+				if m.state != m.prevState {
+					m.action = reload
+				} else {
+					m.action = none
+				}
+			case "t":
+				m.state = timeline
+				if m.state != m.prevState {
+					m.action = reload
+				} else {
+					m.action = none
+				}
+			case "a":
+				switch m.state {
+				case boxSummary:
+					m.state = boxAdd
+					m.action = addItem
+				case boxView:
+					m.state = timeAdd
+					m.action = addItem
+				case timeline:
+					m.state = timeAdd
+					m.action = addItem
+				}
+			case "e":
+				switch m.state {
+				case boxSummary:
+					m.state = boxEdit
+					m.action = editItem
+				case boxView:
+					m.state = timeEdit
+					m.action = editItem
+				case timeline:
+					m.state = timeEdit
+					m.action = editItem
+				}
+			}
 		}
 	}
 	switch m.state {
 	case boxSummary:
-		break
+		if m.prevState == boxSummary && m.action == none {
+			var newModel tea.Model
+			newModel, cmd = m.tbl.Update(msg)
+			m.tbl = newModel.(tableui.Model)
+		}
+		if m.action == reload {
+			m.tbl = tableui.NewBoxSummary(m.timebox, m.period.Period)
+		}
 	case boxView:
-		break
+		if m.action == reload {
+			boxName := m.tbl.GetSelectedBoxName()
+			m.tbl = tableui.NewBoxView(m.timebox, m.period.Period, boxName)
+		}
 	case boxAdd:
 		break
 	case boxEdit:
@@ -106,7 +172,9 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case boxDelete:
 		break
 	case timeline:
-		break
+		if m.action == reload {
+			m.tbl = tableui.NewTimeline(m.timebox, m.period.Period)
+		}
 	case timeAdd:
 		break
 	case timeEdit:
@@ -127,7 +195,7 @@ func (m MainModel) View() string {
 	rw := constants.TUIWidth - lw - 1
 	period := lipgloss.NewStyle().Width(rw).Align(lipgloss.Right).Render(m.periodView())
 	bottom := lipgloss.JoinHorizontal(lipgloss.Top, session, period)
-	return lipgloss.JoinVertical(lipgloss.Left, top, m.summary.View(), bottom)
+	return lipgloss.JoinVertical(lipgloss.Left, top, m.tbl.View(), bottom)
 }
 
 func loadLogo() string {
