@@ -1,4 +1,4 @@
-package inputui
+package addui
 
 import (
 	"fmt"
@@ -21,11 +21,11 @@ const (
 type inputFields int
 
 const (
-	inputNameField inputFields = iota
-	inputMinField
-	inputMaxField
-	inputCancelButton
-	inputSubmitButton
+	nameField inputFields = iota
+	minField
+	maxField
+	cancelButton
+	submitButton
 )
 
 type state int
@@ -42,14 +42,13 @@ type Model struct {
 	focusedField   inputFields
 	editMode       bool
 	inputs         []textinput.Model
-	inputStatus    string
+	status         string
 	nameFieldTitle string
 	minFieldTitle  string
 	maxFieldTitle  string
-	isNameEditable bool
 }
 
-func New() Model {
+func AddBox() Model {
 	var m Model
 	m.inputs = make([]textinput.Model, 3)
 	var t textinput.Model
@@ -73,6 +72,34 @@ func New() Model {
 		}
 		m.inputs[i] = t
 	}
+	return m
+}
+
+func AddSpan(boxName string) Model {
+	var m Model
+	m.inputs = make([]textinput.Model, 3)
+	var t textinput.Model
+	for i := range m.inputs {
+		t = textinput.New()
+		t.PromptStyle = constants.NoStyle
+		t.CursorStyle = constants.NoStyle
+		t.CharLimit = 30
+		switch i {
+		case 0:
+			t.Placeholder = "Box Name"
+			t.Focus()
+			t.PromptStyle = constants.FocusedStyle
+			t.TextStyle = constants.FocusedStyle
+		case 1:
+			t.Placeholder = "Start (e.g. 2023-04-01 17:35:00)"
+			t.CharLimit = 30
+		case 2:
+			t.Placeholder = "End (e.g. 2023-04-01 19:02:30)"
+			t.CharLimit = 30
+		}
+		m.inputs[i] = t
+	}
+	m.inputs[nameField].Prompt = boxName
 	return m
 }
 
@@ -127,7 +154,7 @@ func (m Model) inputView() string {
 		"\n\n%s  %s\n\n%s",
 		cancelButton.Render("[ Cancel ]"),
 		submitButton.Render("[ Submit ]"),
-		constants.ErrStyle(m.inputStatus),
+		constants.ErrStyle(m.status),
 	)
 	if err != nil {
 		fmt.Printf("Error formatting input string: %v\n", err)
@@ -156,11 +183,11 @@ func (m Model) updateInputs() []tea.Cmd {
 }
 
 func (m Model) resetInputs() {
-	m.inputs[inputNameField].Reset()
-	m.inputs[inputMinField].Reset()
-	m.inputs[inputMaxField].Reset()
-	m.focusedField = inputNameField
-	m.inputStatus = ""
+	m.inputs[nameField].Reset()
+	m.inputs[minField].Reset()
+	m.inputs[maxField].Reset()
+	m.focusedField = nameField
+	m.status = ""
 }
 
 func (m Model) validateInputs() (util.Box, error) {

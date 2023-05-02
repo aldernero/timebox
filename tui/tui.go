@@ -2,7 +2,9 @@ package tui
 
 import (
 	"fmt"
+	"github.com/aldernero/timebox/tui/addui"
 	"github.com/aldernero/timebox/tui/constants"
+	"github.com/aldernero/timebox/tui/deleteui"
 	"github.com/aldernero/timebox/tui/tableui"
 	"github.com/aldernero/timebox/util"
 	tea "github.com/charmbracelet/bubbletea"
@@ -40,13 +42,15 @@ const (
 )
 
 type MainModel struct {
-	state      sessionState
-	prevState  sessionState
-	action     action
-	period     util.TimePeriod
-	timebox    *util.TimeBox
-	tbl        tableui.Model
-	windowSize tea.WindowSizeMsg
+	state        sessionState
+	prevState    sessionState
+	action       action
+	period       util.TimePeriod
+	timebox      *util.TimeBox
+	tbl          tableui.Model
+	inputPrompt  addui.Model
+	deletePrompt deleteui.Model
+	windowSize   tea.WindowSizeMsg
 }
 
 func New(tb *util.TimeBox) MainModel {
