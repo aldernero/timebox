@@ -39,16 +39,18 @@ const (
 	editItem
 	deleteItem
 	reload
+	awaitPrompt
 )
 
 type MainModel struct {
-	state        sessionState
-	prevState    sessionState
-	action       action
-	period       util.TimePeriod
-	timebox      *util.TimeBox
-	tbl          tableui.Model
-	inputPrompt  addui.Model
+	state     sessionState
+	prevState sessionState
+	action    action
+	period    util.TimePeriod
+	timebox   *util.TimeBox
+	tbl       tableui.Model
+	addPrompt addui.Model
+	//editPrompt   editui.Model
 	deletePrompt deleteui.Model
 	windowSize   tea.WindowSizeMsg
 }
@@ -170,7 +172,23 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.tbl = tableui.NewBoxView(m.timebox, m.period.Period, boxName)
 		}
 	case boxAdd:
-		break
+		switch m.action {
+		case addItem:
+			m.addPrompt = addui.AddBox()
+			m.action = awaitPrompt
+		case awaitPrompt:
+			switch m.addPrompt.State {
+			case util.WasCancelled:
+				m.state = boxSummary
+				m.action = reload
+			case util.HasResult:
+				result := m.addPrompt.Result
+				err := m.timebox.AddBox(result.Box())
+				if err != nil {
+					return nil, nil
+				}
+			}
+		}
 	case boxEdit:
 		break
 	case boxDelete:
@@ -180,7 +198,9 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.tbl = tableui.NewTimeline(m.timebox, m.period.Period)
 		}
 	case timeAdd:
-		break
+		if m.action == addItem {
+			m.addPrompt = addui.AddSpan(m.tbl.GetSelectedBoxName())
+		}
 	case timeEdit:
 		break
 	case timeDelete:
@@ -199,7 +219,14 @@ func (m MainModel) View() string {
 	rw := constants.TUIWidth - lw - 1
 	period := lipgloss.NewStyle().Width(rw).Align(lipgloss.Right).Render(m.periodView())
 	bottom := lipgloss.JoinHorizontal(lipgloss.Top, session, period)
-	return lipgloss.JoinVertical(lipgloss.Left, top, m.tbl.View(), bottom)
+	var middle string
+	switch m.state {
+	case boxSummary, boxView, timeline:
+		middle = m.tbl.View()
+	case boxAdd:
+		middle = m.addPrompt.View()
+	}
+	return lipgloss.JoinVertical(lipgloss.Left, top, middle, bottom)
 }
 
 func loadLogo() string {

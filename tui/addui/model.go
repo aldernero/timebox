@@ -28,24 +28,15 @@ const (
 	submitButton
 )
 
-type state int
-
-const (
-	normal state = iota
-	focused
-	disabled
-)
-
 type Model struct {
-	mode           promptType
-	state          state
-	focusedField   inputFields
-	editMode       bool
-	inputs         []textinput.Model
-	status         string
-	nameFieldTitle string
-	minFieldTitle  string
-	maxFieldTitle  string
+	mode         promptType
+	State        util.PromptState
+	focusedField inputFields
+	editMode     bool
+	inputs       []textinput.Model
+	status       string
+	hasResult    bool
+	Result       util.InputResult
 }
 
 func AddBox() Model {
@@ -72,6 +63,7 @@ func AddBox() Model {
 		}
 		m.inputs[i] = t
 	}
+	m.State = util.InUse
 	return m
 }
 
@@ -100,6 +92,7 @@ func AddSpan(boxName string) Model {
 		m.inputs[i] = t
 	}
 	m.inputs[nameField].Prompt = boxName
+	m.State = util.InUse
 	return m
 }
 
@@ -110,30 +103,72 @@ func (m Model) Init() tea.Cmd {
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
+	var checkInput bool
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c":
 			return m, tea.Quit
+		case "tab":
+			m.focusedField++
+			if int(m.focusedField) > len(m.inputs)-1 {
+				m.focusedField = 0
+			}
+		case "shift+tab":
+			m.focusedField--
+			if m.focusedField < 0 {
+				m.focusedField = inputFields(len(m.inputs) - 1)
+			}
+		case "enter":
+			switch m.focusedField {
+			case cancelButton:
+				m.resetInputs()
+				m.State = util.WasCancelled
+				return m, nil
+			case submitButton:
+				checkInput = true
+			}
 		}
 	}
-	switch m.mode {
-	case boxInput:
-		break
-	case spanInput:
-		break
+	if checkInput {
+		switch m.mode {
+		case boxInput:
+			box, err := m.validateBoxInputs()
+			if err != nil {
+				m.status = err.Error()
+				return m, nil
+			}
+			m.result = util.NewInputResultBox(box)
+			m.State = util.HasResult
+		case spanInput:
+			span, err := m.validateSpanInputs()
+			if err != nil {
+				m.status = err.Error()
+				return m, nil
+			}
+			m.result = util.NewInputResultSpan(span)
+			m.State = util.HasResult
+		}
 	}
+	cmds = append(cmds, m.updateInputs()...)
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
 }
 
 func (m Model) View() string {
-	return ""
+	return m.inputView()
 }
 
 func (m Model) inputView() string {
 	var b strings.Builder
-	b.WriteString(constants.InputTitleStyle.Render("New Box") + "\n")
+	var title string
+	switch m.mode {
+	case boxInput:
+		title = "New Box"
+	case spanInput:
+		title = "New Timespan"
+	}
+	b.WriteString(constants.InputTitleStyle.Render(title) + "\n")
 	for i := range m.inputs {
 		b.WriteString(m.inputs[i].View())
 		if i < len(m.inputs)-1 {
@@ -190,7 +225,7 @@ func (m Model) resetInputs() {
 	m.status = ""
 }
 
-func (m Model) validateInputs() (util.Box, error) {
+func (m Model) validateBoxInputs() (util.Box, error) {
 	var box util.Box
 	name := m.inputs[0].Value()
 	min := m.inputs[1].Value()
@@ -208,4 +243,28 @@ func (m Model) validateInputs() (util.Box, error) {
 	}
 	box = util.Box{Name: name, MinTime: minTime, MaxTime: maxTime}
 	return box, nil
+}
+
+func (m Model) validateSpanInputs() (util.Span, error) {
+	var span util.Span
+	name := m.inputs[0].Value()
+	min := m.inputs[1].Value()
+	max := m.inputs[2].Value()
+	if name == "" || min == "" || max == "" {
+		return span, fmt.Errorf("empty fields")
+	}
+	minTime, err := util.ParseTime(min)
+	if err != nil {
+		return span, fmt.Errorf("invalid duration: %v", err)
+	}
+	maxTime, err := util.ParseTime(max)
+	if err != nil {
+		return span, fmt.Errorf("invalid duration: %v", err)
+	}
+	span = util.Span{
+		Start: minTime,
+		End:   maxTime,
+		Name:  name,
+	}
+	return span, nil
 }
