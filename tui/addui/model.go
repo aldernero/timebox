@@ -35,7 +35,6 @@ type Model struct {
 	editMode     bool
 	inputs       []textinput.Model
 	status       string
-	hasResult    bool
 	Result       util.InputResult
 }
 
@@ -111,20 +110,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case "tab":
 			m.focusedField++
-			if int(m.focusedField) > len(m.inputs)-1 {
+			if m.focusedField > submitButton {
 				m.focusedField = 0
 			}
 		case "shift+tab":
 			m.focusedField--
 			if m.focusedField < 0 {
-				m.focusedField = inputFields(len(m.inputs) - 1)
+				m.focusedField = submitButton
 			}
 		case "enter":
 			switch m.focusedField {
 			case cancelButton:
 				m.resetInputs()
 				m.State = util.WasCancelled
-				return m, nil
 			case submitButton:
 				checkInput = true
 			}
@@ -136,21 +134,28 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			box, err := m.validateBoxInputs()
 			if err != nil {
 				m.status = err.Error()
-				return m, nil
+				//return m, nil
 			}
-			m.result = util.NewInputResultBox(box)
+			m.Result = util.NewInputResultBox(box)
 			m.State = util.HasResult
+			return m, nil
 		case spanInput:
 			span, err := m.validateSpanInputs()
 			if err != nil {
 				m.status = err.Error()
-				return m, nil
+				//return m, nil
 			}
-			m.result = util.NewInputResultSpan(span)
+			m.Result = util.NewInputResultSpan(span)
 			m.State = util.HasResult
+			return m, nil
 		}
 	}
 	cmds = append(cmds, m.updateInputs()...)
+	for i := 0; i < len(m.inputs); i++ {
+		newModel, cmd := m.inputs[i].Update(msg)
+		m.inputs[i] = newModel
+		cmds = append(cmds, cmd)
+	}
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
 }

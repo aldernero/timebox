@@ -67,6 +67,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.tbl = makeTimelineTable(m.tb, m.tp)
 		}
 	}
+	newModel, cmd := m.tbl.Update(msg)
+	m.tbl = newModel
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
 }

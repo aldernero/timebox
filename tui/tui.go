@@ -47,6 +47,7 @@ type MainModel struct {
 	prevState sessionState
 	action    action
 	period    util.TimePeriod
+	status    string
 	timebox   *util.TimeBox
 	tbl       tableui.Model
 	addPrompt addui.Model
@@ -116,28 +117,29 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyRunes:
 			switch string(msg.Runes) {
 			case "b":
-				m.state = boxSummary
-				if m.state != m.prevState {
-					m.action = reload
-				} else {
-					m.action = none
+				if m.state == timeline {
+					m.state = boxSummary
+					if m.state != m.prevState {
+						m.action = reload
+					} else {
+						m.action = none
+					}
 				}
 			case "t":
-				m.state = timeline
-				if m.state != m.prevState {
-					m.action = reload
-				} else {
-					m.action = none
+				if m.state == boxSummary {
+					m.state = timeline
+					if m.state != m.prevState {
+						m.action = reload
+					} else {
+						m.action = none
+					}
 				}
 			case "a":
 				switch m.state {
 				case boxSummary:
 					m.state = boxAdd
 					m.action = addItem
-				case boxView:
-					m.state = timeAdd
-					m.action = addItem
-				case timeline:
+				case boxView, timeline:
 					m.state = timeAdd
 					m.action = addItem
 				}
@@ -146,10 +148,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case boxSummary:
 					m.state = boxEdit
 					m.action = editItem
-				case boxView:
-					m.state = timeEdit
-					m.action = editItem
-				case timeline:
+				case boxView, timeline:
 					m.state = timeEdit
 					m.action = editItem
 				}
@@ -185,8 +184,14 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				result := m.addPrompt.Result
 				err := m.timebox.AddBox(result.Box())
 				if err != nil {
-					return nil, nil
+					m.status = err.Error()
 				}
+				m.state = boxSummary
+				m.action = reload
+			case util.InUse:
+				var newModel tea.Model
+				newModel, cmd = m.addPrompt.Update(msg)
+				m.addPrompt = newModel.(addui.Model)
 			}
 		}
 	case boxEdit:
