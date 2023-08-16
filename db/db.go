@@ -11,7 +11,7 @@ import (
 
 const defaultDriver = "sqlite3"
 
-// TimeBox DB
+// TBDB is the base struct for the database
 type TBDB struct {
 	name   string
 	driver string
@@ -53,7 +53,12 @@ func (d TBDB) CreateDB() error {
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+
+		}
+	}(db)
 	// ledger table, stores spans of time spent on a given box
 	sqlStmt := `
 	CREATE TABLE spans (start INTEGER NOT NULL, end INTEGER NOT NULL, name TEXT NOT NULL);
@@ -82,7 +87,12 @@ func (d TBDB) AddSpan(start, end int64, name string) error {
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+
+		}
+	}(db)
 	exists, err := d.DoesBoxExist(name)
 	if err != nil {
 		return err
@@ -105,7 +115,12 @@ func (d TBDB) AddSpan(start, end int64, name string) error {
 	if err != nil {
 		return err
 	}
-	defer stmt.Close()
+	defer func(stmt *sql.Stmt) {
+		err := stmt.Close()
+		if err != nil {
+
+		}
+	}(stmt)
 	_, err = stmt.Exec(start, end, name)
 	if err != nil {
 		return err
@@ -122,7 +137,12 @@ func (d TBDB) AddBox(name string, minTime, maxTime int64) error {
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+
+		}
+	}(db)
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -131,7 +151,12 @@ func (d TBDB) AddBox(name string, minTime, maxTime int64) error {
 	if err != nil {
 		return err
 	}
-	defer stmt.Close()
+	defer func(stmt *sql.Stmt) {
+		err := stmt.Close()
+		if err != nil {
+
+		}
+	}(stmt)
 	now := time.Now().Unix()
 	_, err = stmt.Exec(name, now, minTime, maxTime)
 	if err != nil {
@@ -148,7 +173,12 @@ func (d TBDB) DoesSpanOverlap(start, end int64) (bool, error) {
 	if err != nil {
 		return result, err
 	}
-	defer db.Close()
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+
+		}
+	}(db)
 	row := db.QueryRow("SELECT COUNT(*) FROM spans WHERE (start <= ? AND end >= ?) OR (start <= ? AND end >= ?)", start, start, end, end)
 	err = row.Scan(&count)
 	if err != nil {
@@ -164,7 +194,12 @@ func (d TBDB) DoesBoxExist(name string) (bool, error) {
 	if err != nil {
 		return result, err
 	}
-	defer db.Close()
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+
+		}
+	}(db)
 	row := db.QueryRow("SELECT COUNT(*) FROM boxes WHERE name = ?", name)
 	var count int
 	err = row.Scan(&count)
@@ -183,7 +218,12 @@ func (d TBDB) GetBox(name string) (BoxRow, error) {
 	if err != nil {
 		return result, err
 	}
-	defer db.Close()
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+
+		}
+	}(db)
 	row := db.QueryRow("SELECT * FROM boxes WHERE name = ?", name)
 	var createTime, minTime, maxTime int64
 	err = row.Scan(&name, &createTime, &minTime, &maxTime)
@@ -199,7 +239,12 @@ func (d TBDB) GetAllBoxes() ([]BoxRow, error) {
 	if err != nil {
 		return result, err
 	}
-	defer db.Close()
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+
+		}
+	}(db)
 	rows, err := db.Query("SELECT * FROM boxes")
 	if err != nil {
 		return result, err
@@ -222,7 +267,12 @@ func (d TBDB) GetSpansForBox(name string) ([]SpanRow, error) {
 	if err != nil {
 		return result, err
 	}
-	defer db.Close()
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+
+		}
+	}(db)
 	box, err := d.GetBox(name)
 	if err != nil {
 		return result, err
@@ -249,7 +299,12 @@ func (d TBDB) GetSpansForTimeRange(start, end int64) ([]SpanRow, error) {
 	if err != nil {
 		return result, err
 	}
-	defer db.Close()
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+
+		}
+	}(db)
 	rows, err := db.Query("SELECT * FROM spans WHERE start >= ? AND end <= ? ORDER BY start ASC", start, end)
 	if err != nil {
 		return result, err
@@ -273,7 +328,12 @@ func (d TBDB) UpdateBox(name string, minTime, maxTime int64) error {
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+
+		}
+	}(db)
 	stmt, err := db.Prepare("UPDATE boxes SET minTime = ?, maxTime = ? WHERE name = ?")
 	if err != nil {
 		return err
@@ -289,7 +349,12 @@ func (d TBDB) DeleteBox(name string) error {
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+
+		}
+	}(db)
 	stmt, err := db.Prepare("DELETE FROM boxes WHERE name = ?")
 	_, err = stmt.Exec(name)
 	return err
@@ -300,7 +365,12 @@ func (d TBDB) DeleteBoxAndSpans(name string) error {
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+
+		}
+	}(db)
 	stmt, err := db.Prepare("DELETE FROM boxes WHERE name = ?")
 	_, err = stmt.Exec(name)
 	if err != nil {
@@ -316,7 +386,12 @@ func (d TBDB) DeleteSpan(start, end int64, name string) error {
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+
+		}
+	}(db)
 	stmt, err := db.Prepare("DELETE FROM boxes WHERE start = ? AND end = ? AND name = ? ")
 	_, err = stmt.Exec(start, end, name)
 	return err

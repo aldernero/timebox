@@ -1,7 +1,7 @@
 package util
 
 import (
-	"github.com/aldernero/timebox/db"
+	"tb2/db"
 	"time"
 )
 

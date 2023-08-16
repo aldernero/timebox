@@ -1,34 +1,44 @@
 package util
 
 import (
-	"github.com/aldernero/timebox/db"
+	"tb2/db"
 	"time"
 )
 
 type TimeBox struct {
 	tbdb  db.TBDB
+	Fname string
 	Names []string
 	Boxes map[string]Box
 	Spans map[string]SpanSet
 }
 
-func NewTimeBox(dbname string) *TimeBox {
+func NewTimeBox(dbname string) TimeBox {
 	var tb TimeBox
+	tb.Fname = dbname
 	tb.tbdb = db.NewDBWithName(dbname)
 	tb.tbdb.Init()
 	tb.Names, tb.Boxes = AllBoxesFromDB(tb.tbdb)
+	if len(tb.Names) == 0 {
+		panic("no boxes")
+	}
 	tb.Spans = AllSpansFromDB(tb.tbdb)
-	return &tb
+	if len(tb.Spans) == 0 {
+		panic("no spans")
+	}
+	return tb
 }
 
 func (tb TimeBox) GetSpansForBox(box string, span Span) SpanSet {
 	var spans SpanSet
 	boxSpans := tb.Spans[box]
+
 	for _, s := range boxSpans.Spans {
 		overlap := s.GetOverlap(span)
 		if !overlap.IsZero() {
 			spans.Add(overlap)
 		}
+		spans.Add(span)
 	}
 	return spans
 }
@@ -70,14 +80,32 @@ func (tb TimeBox) AddBox(box Box) error {
 	return nil
 }
 
-func (tb TimeBox) AddSpan(name string, start, end time.Time) error {
-	err := tb.tbdb.AddSpan(start.Unix(), end.Unix(), name)
+func (tb TimeBox) UpdateBox(box Box) error {
+	err := tb.tbdb.UpdateBox(box.Name, int64(box.MinTime.Seconds()), int64(box.MaxTime.Seconds()))
 	if err != nil {
 		return err
 	}
-	if _, ok := tb.Spans[name]; !ok {
-		tb.Spans[name] = SpanSet{}
+	tb.Boxes[box.Name] = box
+	return nil
+}
+
+func (tb TimeBox) DeleteBox(box string) error {
+	err := tb.tbdb.DeleteBox(box)
+	if err != nil {
+		return err
 	}
-	tb.Spans[name].Add(Span{start, end, name})
+	delete(tb.Boxes, box)
+	return nil
+}
+
+func (tb TimeBox) AddSpan(span Span) error {
+	err := tb.tbdb.AddSpan(span.Start.Unix(), span.End.Unix(), span.Name)
+	if err != nil {
+		return err
+	}
+	if _, ok := tb.Spans[span.Name]; !ok {
+		tb.Spans[span.Name] = SpanSet{}
+	}
+	tb.Spans[span.Name].Add(span)
 	return nil
 }

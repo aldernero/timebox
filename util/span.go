@@ -1,7 +1,7 @@
 package util
 
 import (
-	"github.com/aldernero/timebox/db"
+	"tb2/db"
 	"time"
 )
 
@@ -35,6 +35,10 @@ func (s Span) GetOverlap(span Span) Span {
 
 type SpanSet struct {
 	Spans []Span
+}
+
+func (s SpanSet) IsEmpty() bool {
+	return len(s.Spans) == 0
 }
 
 func (s SpanSet) Add(span Span) {

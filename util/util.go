@@ -3,7 +3,7 @@ package util
 import "time"
 
 const (
-	timeFormatShort = "2006-01-02"
+	timeFormatShort = "15:04:05"
 	timeFormatLong  = "2006-01-02 15:04:05"
 )
 
