@@ -2,11 +2,11 @@ package tui
 
 import (
 	"fmt"
+	"github.com/aldernero/timebox/util"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"os"
 	"strings"
-	"tb2/util"
 	"time"
 )
 

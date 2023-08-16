@@ -2,11 +2,11 @@ package tui
 
 import (
 	"fmt"
+	"github.com/aldernero/timebox/util"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/evertras/bubble-table/table"
 	"log"
 	"os"
-	"tb2/util"
 )
 
 type Model struct {

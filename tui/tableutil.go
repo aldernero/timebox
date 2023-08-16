@@ -1,8 +1,8 @@
 package tui
 
 import (
+	"github.com/aldernero/timebox/util"
 	"github.com/evertras/bubble-table/table"
-	"tb2/util"
 	"time"
 )
 
