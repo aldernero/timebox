@@ -29,12 +29,12 @@ type TimePeriod struct {
 	Period
 }
 
-func (t TimePeriod) Names() []string {
+func (t *TimePeriod) Names() []string {
 	names := []string{"Week", "Month", "Quarter", "Year"}
 	return names
 }
 
-func (t TimePeriod) Current() int {
+func (t *TimePeriod) Current() int {
 	return int(t.Period)
 }
 
@@ -47,6 +47,8 @@ func (t *TimePeriod) Previous() {
 }
 
 // WeekStart calculates the time at the beginning of the week for a given time
+//
+//goland:noinspection SpellCheckingInspection
 func WeekStart(t time.Time) time.Time {
 	wday := int(t.Weekday())
 	seconds := wday*86400 + t.Hour()*3600 + t.Minute()*60 + t.Second()
@@ -93,11 +95,12 @@ func YearStart(t time.Time) time.Time {
 	return time.Date(t.Year(), time.January, 1, 0, 0, 0, 0, time.Local)
 }
 
-// ThisMonthStart calculates the time at the beginning of the current month
+// ThisYearStart calculates the time at the beginning of the current year
 func ThisYearStart() time.Time {
 	return YearStart(time.Now())
 }
 
+//goland:noinspection SpellCheckingInspection
 func DurationParser(d time.Duration) string {
 	dsec := int(d.Seconds())
 	years := dsec / secondsPerYear

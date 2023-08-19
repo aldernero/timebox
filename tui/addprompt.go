@@ -314,7 +314,7 @@ func (m AddPrompt) validateSpanInputs() (util.Span, error) {
 	span = util.Span{
 		Start: minTime,
 		End:   maxTime,
-		Name:  name,
+		Box:   name,
 	}
 	return span, nil
 }

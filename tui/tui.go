@@ -22,9 +22,9 @@ type Model struct {
 func New(tb util.TimeBox) Model {
 	return Model{
 		state: nav,
-		view:  timeline,
+		view:  boxSummary,
 		tb:    tb,
-		tbl:   makeTimelineTable(tb, util.Week),
+		tbl:   makeBoxSummaryTable(tb, util.Week),
 	}
 }
 
@@ -93,16 +93,16 @@ func (m Model) updateAdd(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if err != nil {
 				log.Fatal(err)
 			}
-			m.tb = util.NewTimeBox(m.tb.Fname)
+			m.tb = util.TimeBoxFromDB(m.tb.Fname)
 			m.tbl = makeBoxSummaryTable(m.tb, util.Week)
 			m.state = nav
 		case boxView:
 			res := m.addPrompt.Result
-			err := m.tb.AddSpan(res.Span())
+			err := m.tb.AddSpan(res.Span(), m.currScope)
 			if err != nil {
 				log.Fatal(err)
 			}
-			m.tb = util.NewTimeBox(m.tb.Fname)
+			m.tb = util.TimeBoxFromDB(m.tb.Fname)
 			m.tbl = makeBoxViewTable(m.tb, m.currScope, util.Week)
 			m.state = nav
 		}
@@ -185,7 +185,7 @@ func (m Model) updateEdit(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		m.tb = util.NewTimeBox(m.tb.Fname)
+		m.tb = util.TimeBoxFromDB(m.tb.Fname)
 		m.tbl = makeBoxSummaryTable(m.tb, util.Week)
 		m.state = nav
 	}
@@ -210,7 +210,7 @@ func (m Model) updateDel(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if err != nil {
 				log.Fatal(err)
 			}
-			m.tb = util.NewTimeBox(m.tb.Fname)
+			m.tb = util.TimeBoxFromDB(m.tb.Fname)
 			m.tbl = makeBoxSummaryTable(m.tb, util.Week)
 		}
 		m.state = nav

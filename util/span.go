@@ -45,12 +45,6 @@ type SpanSet struct {
 	Spans []Span
 }
 
-func NewSpanSet() SpanSet {
-	return SpanSet{
-		Spans: []Span{},
-	}
-}
-
 func (s *SpanSet) IsEmpty() bool {
 	return len(s.Spans) == 0
 }

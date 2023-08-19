@@ -13,19 +13,13 @@ type TimeBox struct {
 	Spans map[string]SpanSet
 }
 
-func NewTimeBox(dbname string) TimeBox {
+func TimeBoxFromDB(dbname string) TimeBox {
 	var tb TimeBox
 	tb.Fname = dbname
 	tb.tbdb = db.NewDBWithName(dbname)
 	tb.tbdb.Init()
 	tb.Names, tb.Boxes = AllBoxesFromDB(tb.tbdb)
-	if len(tb.Names) == 0 {
-		panic("no boxes")
-	}
 	tb.Spans = AllSpansFromDB(tb.tbdb)
-	if len(tb.Spans) == 0 {
-		panic("no spans")
-	}
 	return tb
 }
 

@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	TUIWidth              = 79
+	UIWidth               = 79
 	defaultInputWidth     = 28
 	SummaryPageSize       = 10
 	DetailPageSize        = 16
@@ -45,7 +45,7 @@ var InputStyle = lipgloss.NewStyle().
 	BorderForeground(lipgloss.Color(ColorPromptBorder)).
 	Render
 var PromptStyle = lipgloss.NewStyle().
-	Width(TUIWidth).
+	Width(UIWidth).
 	Align(lipgloss.Center)
 var ErrStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(ColorError)).Render
 var NoStyle = lipgloss.NewStyle()

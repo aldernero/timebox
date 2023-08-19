@@ -23,7 +23,7 @@ func makeBoxSummaryRow(box string, min, max, use time.Duration) table.Row {
 		columnKeyBox: box,
 		columnKeyMin: min,
 		columnKeyMax: max,
-		columnKeyUse: use,
+		columnKeyUse: util.DurationParser(use),
 	})
 }
 
@@ -32,7 +32,7 @@ func makeTimelineRow(box string, start time.Time, end time.Time) table.Row {
 		columnKeyBox:   box,
 		columnKeyStart: start,
 		columnKeyEnd:   end,
-		columnKeyDur:   end.Sub(start),
+		columnKeyDur:   util.DurationParser(end.Sub(start)),
 	})
 }
 
@@ -43,10 +43,6 @@ func makeBoxSummaryTable(tb util.TimeBox, p util.Period) table.Model {
 	for _, val := range tb.Names {
 		box := boxes[val]
 		minTime, maxTime := box.ScaledTimes(p)
-		n := tb.GetSpansForBox(val, timespan)
-		if n.IsEmpty() {
-			panic("empty span set")
-		}
 		spans := tb.GetSpansForBox(val, timespan)
 		usedTime := spans.Duration()
 		rows = append(rows, makeBoxSummaryRow(val, minTime, maxTime, usedTime))
@@ -59,7 +55,7 @@ func makeBoxSummaryTable(tb util.TimeBox, p util.Period) table.Model {
 	}).WithRows(rows).
 		BorderRounded().
 		WithBaseStyle(TableStyle).
-		WithTargetWidth(TUIWidth).
+		WithTargetWidth(UIWidth).
 		WithPageSize(SummaryPageSize).
 		Focused(true)
 }
@@ -79,7 +75,7 @@ func makeBoxViewTable(tb util.TimeBox, boxName string, p util.Period) table.Mode
 	}).WithRows(rows).
 		BorderRounded().
 		WithBaseStyle(TableStyle).
-		WithTargetWidth(TUIWidth).
+		WithTargetWidth(UIWidth).
 		WithPageSize(SummaryPageSize).
 		Focused(true)
 }
@@ -99,7 +95,7 @@ func makeTimelineTable(tb util.TimeBox, p util.Period) table.Model {
 	}).WithRows(rows).
 		BorderRounded().
 		WithBaseStyle(TableStyle).
-		WithTargetWidth(TUIWidth).
+		WithTargetWidth(UIWidth).
 		WithPageSize(SummaryPageSize).
 		Focused(true)
 }
