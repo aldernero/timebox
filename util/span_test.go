@@ -340,7 +340,8 @@ func TestAllSpansFromDB(t *testing.T) {
 	assert.Equal(t, 4, len(spans))
 	for i := 0; i < 4; i++ {
 		boxName := fmt.Sprintf("box%d", i)
-		assert.Equal(t, 4, spans[boxName].Size())
+		spanset := spans[boxName]
+		assert.Equal(t, 4, spanset.Size())
 	}
 }
 

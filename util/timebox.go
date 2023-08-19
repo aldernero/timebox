@@ -64,7 +64,9 @@ func (tb TimeBox) GetSpans(span Span) map[string]SpanSet {
 		for _, s := range spanset.Spans {
 			overlap := s.GetOverlap(span)
 			if !overlap.IsZero() {
-				spans[box].Add(overlap)
+				spanset := spans[box]
+				spanset.Add(overlap)
+				spans[box] = spanset
 			}
 		}
 	}
@@ -106,6 +108,8 @@ func (tb TimeBox) AddSpan(span Span, box string) error {
 	if _, ok := tb.Spans[box]; !ok {
 		tb.Spans[box] = SpanSet{}
 	}
-	tb.Spans[box].Add(span)
+	spanset := tb.Spans[box]
+	spanset.Add(span)
+	tb.Spans[box] = spanset
 	return nil
 }
