@@ -32,7 +32,6 @@ func (tb TimeBox) GetSpansForBox(box string, span Span) SpanSet {
 		if !overlap.IsZero() {
 			spans.Add(overlap)
 		}
-		spans.Add(span)
 	}
 	return spans
 }

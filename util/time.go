@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+	"github.com/charmbracelet/lipgloss"
 	"time"
 )
 
@@ -15,15 +16,36 @@ const (
 )
 
 const (
-	secondsPerYear   = 31557600 // 365.25 days
-	secondsPerWeek   = 604800
-	secondsPerDay    = 86400
-	secondsPerHour   = 3600
-	secondsPerMinute = 60
-	monthsPerWeek    = 0.2301 // estimate for faster calculation
-	quartersPerWeek  = 0.0767 // estimate for faster calculation
-	yearsPerWeek     = 0.0192 // estimate for faster calculation
+	secondsPerYear       = 31557600 // 365.25 days
+	secondsPerWeek       = 604800
+	secondsPerDay        = 86400
+	secondsPerHour       = 3600
+	secondsPerMinute     = 60
+	monthsPerWeek        = 0.2301 // estimate for faster calculation
+	quartersPerWeek      = 0.0767 // estimate for faster calculation
+	yearsPerWeek         = 0.0192 // estimate for faster calculation
+	ColorDurationYears   = "#8FE8E6"
+	ColorDurationDays    = "#FF9812"
+	ColorDurationHours   = "#FF0087"
+	ColorDurationMinutes = "#00D7FF"
+	ColorDurationSeconds = "#FFFF5F"
 )
+
+var DurationYearStyle = lipgloss.NewStyle().
+	Foreground(lipgloss.Color(ColorDurationYears)).
+	Render
+var DurationDayStyle = lipgloss.NewStyle().
+	Foreground(lipgloss.Color(ColorDurationDays)).
+	Render
+var DurationHourStyle = lipgloss.NewStyle().
+	Foreground(lipgloss.Color(ColorDurationHours)).
+	Render
+var DurationMinuteStyle = lipgloss.NewStyle().
+	Foreground(lipgloss.Color(ColorDurationMinutes)).
+	Render
+var DurationSecondStyle = lipgloss.NewStyle().
+	Foreground(lipgloss.Color(ColorDurationSeconds)).
+	Render
 
 type TimePeriod struct {
 	Period
@@ -108,21 +130,31 @@ func DurationParser(d time.Duration) string {
 	hours := (dsec - years*secondsPerYear - days*secondsPerDay) / secondsPerHour
 	minutes := (dsec - years*secondsPerYear - days*secondsPerDay - hours*secondsPerHour) / secondsPerMinute
 	seconds := dsec - years*secondsPerYear - days*secondsPerDay - hours*secondsPerHour - minutes*secondsPerMinute
+	Y := DurationYearStyle(fmt.Sprintf("%dy", years))
+	D := DurationDayStyle(fmt.Sprintf("%dd", days))
+	H := DurationHourStyle(fmt.Sprintf("%dh", hours))
+	M := DurationMinuteStyle(fmt.Sprintf("%dm", minutes))
+	S := DurationSecondStyle(fmt.Sprintf("%ds", seconds))
 	var result string
 	if years > 0 {
-		result = fmt.Sprintf("%dy %dd %dh %dm %ds", years, days, hours, minutes, seconds)
+		result = Y + D + H + M + S
+		//result = fmt.Sprintf("%dy%dd%dh%dm%ds", years, days, hours, minutes, seconds)
 	}
 	if years == 0 && days > 0 {
-		result = fmt.Sprintf("%dd %dh %dm %ds", days, hours, minutes, seconds)
+		result = D + H + M + S
+		//result = fmt.Sprintf("%dd%dh%dm%ds", days, hours, minutes, seconds)
 	}
 	if years == 0 && days == 0 && hours > 0 {
-		result = fmt.Sprintf("%dh %dm %ds", hours, minutes, seconds)
+		result = H + M + S
+		//result = fmt.Sprintf("%dh%dm%ds", hours, minutes, seconds)
 	}
 	if years == 0 && days == 0 && hours == 0 && minutes > 0 {
-		result = fmt.Sprintf("%dm %ds", minutes, seconds)
+		result = M + S
+		//result = fmt.Sprintf("%dm%ds", minutes, seconds)
 	}
 	if years == 0 && days == 0 && hours == 0 && minutes == 0 {
-		result = fmt.Sprintf("%ds", seconds)
+		result = S
+		//result = fmt.Sprintf("%ds", seconds)
 	}
 	return result
 }
