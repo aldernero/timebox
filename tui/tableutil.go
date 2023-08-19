@@ -7,15 +7,16 @@ import (
 )
 
 const (
-	columnKeyBox   = "box"
-	columnKeyMin   = "min"
-	columnKeyMax   = "max"
-	columnKeyUse   = "use"
-	columnKeyStart = "start"
-	columnKeyEnd   = "end"
-	columnKeyDur   = "dur"
-	columnWidthBox = 20
-	columnWidthDur = 10
+	columnKeyBox    = "box"
+	columnKeyMin    = "min"
+	columnKeyMax    = "max"
+	columnKeyUse    = "use"
+	columnKeyStart  = "start"
+	columnKeyEnd    = "end"
+	columnKeyDur    = "dur"
+	columnWidthBox  = 20
+	columnWidthTime = 20
+	columnWidthDur  = 17
 )
 
 func makeBoxSummaryRow(box string, min, max, use time.Duration) table.Row {
@@ -69,8 +70,8 @@ func makeBoxViewTable(tb util.TimeBox, boxName string, p util.Period) table.Mode
 	}
 	return table.New([]table.Column{
 		table.NewFlexColumn(columnKeyBox, "Box", columnWidthBox),
-		table.NewFlexColumn(columnKeyStart, "Start", columnWidthDur),
-		table.NewFlexColumn(columnKeyEnd, "End", columnWidthDur),
+		table.NewColumn(columnKeyStart, "Start", columnWidthTime),
+		table.NewColumn(columnKeyEnd, "End", columnWidthTime),
 		table.NewFlexColumn(columnKeyDur, "Duration", columnWidthDur),
 	}).WithRows(rows).
 		BorderRounded().
