@@ -128,14 +128,14 @@ func Earlier(t1, t2 time.Time) time.Time {
 	if t1.Unix() < t2.Unix() {
 		return t1
 	}
-	return t1
+	return t2
 }
 
 func Later(t1, t2 time.Time) time.Time {
 	if t1.Unix() > t2.Unix() {
 		return t1
 	}
-	return t1
+	return t2
 }
 
 func WeekSoFar() Span {
@@ -175,4 +175,12 @@ func FiscalQuarter(fiscalYearStart, calendarMonth time.Month) int {
 		fm += 12
 	}
 	return fm/3 + 1
+}
+
+func AfterOrEqual(t1, t2 time.Time) bool {
+	return t1.Unix() >= t2.Unix()
+}
+
+func BeforeOrEqual(t1, t2 time.Time) bool {
+	return t1.Unix() <= t2.Unix()
 }

@@ -18,18 +18,26 @@ func (s Span) IsZero() bool {
 	return s.Start.IsZero() && s.End.IsZero()
 }
 
+func (s Span) IsEqual(span Span) bool {
+	return s.Start.Equal(span.Start) && s.End.Equal(span.End)
+}
+
 func (s Span) Overlaps(span Span) bool {
-	disjoint := s.Start.After(span.End) || s.End.Before(s.Start)
+	disjoint := AfterOrEqual(s.Start, span.End) || BeforeOrEqual(s.End, span.Start)
 	return !disjoint
 }
 
 func (s Span) GetOverlap(span Span) Span {
 	var result Span
-	if !s.Overlaps(span) {
+	if s.Overlaps(span) {
 		result.Start = Later(s.Start, span.Start)
 		result.End = Earlier(s.End, span.End)
 	}
 	return result
+}
+
+func (s Span) String() string {
+	return s.Start.Format(time.RFC3339) + " - " + s.End.Format(time.RFC3339)
 }
 
 type SpanSet struct {
