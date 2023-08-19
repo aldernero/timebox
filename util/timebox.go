@@ -52,7 +52,7 @@ func (tb TimeBox) GetSpansForTimespan(span Span) SpanSet {
 		panic(err)
 	}
 	for _, sr := range spanRow {
-		spans.Add(Span{time.Unix(sr.Start, 0), time.Unix(sr.End, 0), sr.Name})
+		spans.Add(Span{time.Unix(sr.Start, 0), time.Unix(sr.End, 0)})
 	}
 	return spans
 }
@@ -98,14 +98,14 @@ func (tb TimeBox) DeleteBox(box string) error {
 	return nil
 }
 
-func (tb TimeBox) AddSpan(span Span) error {
-	err := tb.tbdb.AddSpan(span.Start.Unix(), span.End.Unix(), span.Name)
+func (tb TimeBox) AddSpan(span Span, box string) error {
+	err := tb.tbdb.AddSpan(span.Start.Unix(), span.End.Unix(), box)
 	if err != nil {
 		return err
 	}
-	if _, ok := tb.Spans[span.Name]; !ok {
-		tb.Spans[span.Name] = SpanSet{}
+	if _, ok := tb.Spans[box]; !ok {
+		tb.Spans[box] = SpanSet{}
 	}
-	tb.Spans[span.Name].Add(span)
+	tb.Spans[box].Add(span)
 	return nil
 }

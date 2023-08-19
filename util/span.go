@@ -8,7 +8,6 @@ import (
 type Span struct {
 	Start time.Time
 	End   time.Time
-	Name  string
 }
 
 func (s Span) Duration() time.Duration {
@@ -69,7 +68,6 @@ func AllSpansFromDB(tbdb db.TBDB) map[string]SpanSet {
 			spanset.Add(Span{
 				Start: time.Unix(sr.Start, 0),
 				End:   time.Unix(sr.End, 0),
-				Name:  sr.Name,
 			})
 		}
 		result[br.Name] = spanset
@@ -87,7 +85,6 @@ func AllSpansFromDBForTimeRange(tbdb db.TBDB, start, end int64) SpanSet {
 		result.Add(Span{
 			Start: time.Unix(sr.Start, 0),
 			End:   time.Unix(sr.End, 0),
-			Name:  sr.Name,
 		})
 	}
 	return result

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"testing"
@@ -15,10 +15,11 @@ import (
 const dbName = "test.db"
 
 func setup(t *testing.T) TBDB {
-	tempDir, err := ioutil.TempDir(os.TempDir(), "timebox")
+	tempDir, err := os.MkdirTemp(os.TempDir(), "timebox")
 	require.NoError(t, err)
 	testdb := filepath.Join(tempDir, filepath.FromSlash(dbName))
-	os.Remove(testdb)
+	err = os.Remove(testdb)
+	require.NoFileExists(t, testdb)
 	tbdb := NewDBWithName(testdb)
 	require.NoError(t, tbdb.CreateDB())
 	return tbdb
@@ -27,12 +28,22 @@ func setup(t *testing.T) TBDB {
 func boxWithCreateTime(t *testing.T, tbdb TBDB, name string, minTime, maxTime, ts int64) {
 	db, err := sql.Open(tbdb.driver, tbdb.name)
 	require.NoError(t, err)
-	defer db.Close()
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			log.Fatalf("error closing db: %v", err)
+		}
+	}(db)
 	tx, err := db.Begin()
 	require.NoError(t, err)
 	stmt, err := tx.Prepare("INSERT INTO boxes(name, createTime, minTime, maxTime) values(?, ?, ?, ?)")
 	require.NoError(t, err)
-	defer stmt.Close()
+	defer func(stmt *sql.Stmt) {
+		err := stmt.Close()
+		if err != nil {
+			log.Fatalf("error closing stmt: %v", err)
+		}
+	}(stmt)
 	_, err = stmt.Exec(name, ts, minTime, maxTime)
 	require.NoError(t, err)
 	err = tx.Commit()
@@ -40,20 +51,14 @@ func boxWithCreateTime(t *testing.T, tbdb TBDB, name string, minTime, maxTime, t
 }
 
 func TestTBDB_CreateDB(t *testing.T) {
-	tempDir, err := ioutil.TempDir(os.TempDir(), "timebox")
-	require.NoError(t, err)
-	testdb := filepath.Join(tempDir, filepath.FromSlash(dbName))
-	os.Remove(testdb)
-	tbdb := NewDBWithName(testdb)
-	require.NoError(t, tbdb.CreateDB())
-	require.FileExists(t, testdb)
+	tbdb := setup(t)
 	exists, err := tbdb.DoesBoxExist("box name")
 	require.NoError(t, err)
 	assert.False(t, exists)
 	overlaps, err := tbdb.DoesSpanOverlap(0, 1)
 	require.NoError(t, err)
 	assert.False(t, overlaps)
-	require.NoError(t, os.Remove(testdb))
+	//require.NoError(t, os.Remove(testdb))
 }
 
 func TestTBDB_AddBox(t *testing.T) {
@@ -175,7 +180,7 @@ func TestTBDB_GetSpansForBox(t *testing.T) {
 		{start.Add(9 * time.Minute).Unix(), start.Add(12 * time.Minute).Unix(), box},
 	}
 	for _, i := range input {
-		require.NoError(t, tbdb.AddSpan(i.Start, i.End, i.Name))
+		require.NoError(t, tbdb.AddSpan(i.Start, i.End, i.Box))
 	}
 	spans, err := tbdb.GetSpansForBox("box-1")
 	require.NoError(t, err)
@@ -183,7 +188,7 @@ func TestTBDB_GetSpansForBox(t *testing.T) {
 	for i := range input {
 		assert.Equal(t, input[i].Start, spans[i].Start)
 		assert.Equal(t, input[i].End, spans[i].End)
-		assert.Equal(t, input[i].Name, spans[i].Name)
+		assert.Equal(t, input[i].Box, spans[i].Box)
 	}
 	require.NoError(t, tbdb.AddSpan(
 		time.Now().Add(-368*24*time.Hour).Unix(), time.Now().Add(-367*24*time.Hour).Unix(), box))
@@ -191,7 +196,7 @@ func TestTBDB_GetSpansForBox(t *testing.T) {
 		time.Now().Add(-400*24*time.Hour).Unix(), time.Now().Add(-398*24*time.Hour).Unix(), box))
 	spans, err = tbdb.GetSpansForBox("box-1")
 	require.NoError(t, err)
-	// shouldn't pick up last two spans which are older than the create time
+	// shouldn't pick up last two spans which are older than the creation time
 	assert.Equal(t, len(input), len(spans))
 }
 
@@ -233,4 +238,30 @@ func TestTBDB_DeleteBoxAndSpans(t *testing.T) {
 	assert.False(t, exists)
 	_, err = tbdb.GetSpansForBox(box)
 	assert.EqualError(t, err, "sql: no rows in result set")
+}
+
+func TestTBDB_DoesSpanOverlap(t *testing.T) {
+	tbdb := setup(t)
+	box1 := "box-1"
+	box2 := "box-2"
+	require.NoError(t, tbdb.AddBox(box1, 1, 2))
+	require.NoError(t, tbdb.AddSpan(1, 2, box1))
+	require.NoError(t, tbdb.AddSpan(5, 7, box1))
+	require.NoError(t, tbdb.AddBox(box2, 1, 2))
+	require.NoError(t, tbdb.AddSpan(8, 10, box2))
+	// overlaps first span
+	span := SpanRow{Start: 1, End: 2, Box: box1}
+	overlaps, err := tbdb.DoesSpanOverlap(span.Start, span.End)
+	require.NoError(t, err)
+	require.True(t, overlaps)
+	// doesn't overlap first span
+	span = SpanRow{Start: 2, End: 4, Box: box2}
+	overlaps, err = tbdb.DoesSpanOverlap(span.Start, span.End)
+	require.NoError(t, err)
+	require.False(t, overlaps)
+	// overlaps last span
+	span = SpanRow{Start: 9, End: 12, Box: box1}
+	overlaps, err = tbdb.DoesSpanOverlap(span.Start, span.End)
+	require.NoError(t, err)
+	require.True(t, overlaps)
 }

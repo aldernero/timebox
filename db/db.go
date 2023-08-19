@@ -20,7 +20,7 @@ type TBDB struct {
 type SpanRow struct {
 	Start int64
 	End   int64
-	Name  string
+	Box   string
 }
 
 type BoxRow struct {
@@ -61,7 +61,7 @@ func (d TBDB) CreateDB() error {
 	}(db)
 	// ledger table, stores spans of time spent on a given box
 	sqlStmt := `
-	CREATE TABLE spans (start INTEGER NOT NULL, end INTEGER NOT NULL, name TEXT NOT NULL);
+	CREATE TABLE spans (start INTEGER NOT NULL, end INTEGER NOT NULL, box TEXT NOT NULL);
 	`
 	_, err = db.Exec(sqlStmt)
 	if err != nil {
@@ -75,7 +75,7 @@ func (d TBDB) CreateDB() error {
 	return err
 }
 
-func (d TBDB) AddSpan(start, end int64, name string) error {
+func (d TBDB) AddSpan(start, end int64, box string) error {
 	if start > end {
 		return fmt.Errorf("start time is after end time")
 	}
@@ -93,12 +93,12 @@ func (d TBDB) AddSpan(start, end int64, name string) error {
 
 		}
 	}(db)
-	exists, err := d.DoesBoxExist(name)
+	exists, err := d.DoesBoxExist(box)
 	if err != nil {
 		return err
 	}
 	if !exists {
-		return fmt.Errorf("box %s doesn't exist", name)
+		return fmt.Errorf("box %s doesn't exist", box)
 	}
 	overlaps, err := d.DoesSpanOverlap(start, end)
 	if err != nil {
@@ -111,7 +111,7 @@ func (d TBDB) AddSpan(start, end int64, name string) error {
 	if err != nil {
 		return err
 	}
-	stmt, err := tx.Prepare("INSERT INTO spans(start, end, name) values(?, ?, ?)")
+	stmt, err := tx.Prepare("INSERT INTO spans(start, end, box) values(?, ?, ?)")
 	if err != nil {
 		return err
 	}
@@ -121,7 +121,7 @@ func (d TBDB) AddSpan(start, end int64, name string) error {
 
 		}
 	}(stmt)
-	_, err = stmt.Exec(start, end, name)
+	_, err = stmt.Exec(start, end, box)
 	if err != nil {
 		return err
 	}
@@ -179,7 +179,7 @@ func (d TBDB) DoesSpanOverlap(start, end int64) (bool, error) {
 
 		}
 	}(db)
-	row := db.QueryRow("SELECT COUNT(*) FROM spans WHERE (start <= ? AND end >= ?) OR (start <= ? AND end >= ?)", start, start, end, end)
+	row := db.QueryRow("SELECT COUNT(*) FROM spans WHERE NOT ? <= start AND NOT ? >= end;", end, start)
 	err = row.Scan(&count)
 	if err != nil {
 		return result, err
@@ -261,7 +261,7 @@ func (d TBDB) GetAllBoxes() ([]BoxRow, error) {
 	return result, nil
 }
 
-func (d TBDB) GetSpansForBox(name string) ([]SpanRow, error) {
+func (d TBDB) GetSpansForBox(boxName string) ([]SpanRow, error) {
 	var result []SpanRow
 	db, err := sql.Open(d.driver, d.name)
 	if err != nil {
@@ -273,11 +273,11 @@ func (d TBDB) GetSpansForBox(name string) ([]SpanRow, error) {
 
 		}
 	}(db)
-	box, err := d.GetBox(name)
+	box, err := d.GetBox(boxName)
 	if err != nil {
 		return result, err
 	}
-	rows, err := db.Query("SELECT * FROM spans WHERE name = ? AND start >= ?", box.Name, box.CreateTime)
+	rows, err := db.Query("SELECT * FROM spans WHERE box = ? AND start >= ?", box.Name, box.CreateTime)
 	if err != nil {
 		return result, err
 	}
@@ -305,7 +305,7 @@ func (d TBDB) GetSpansForTimeRange(start, end int64) ([]SpanRow, error) {
 
 		}
 	}(db)
-	rows, err := db.Query("SELECT * FROM spans WHERE start >= ? AND end <= ? ORDER BY start ASC", start, end)
+	rows, err := db.Query("SELECT * FROM spans WHERE start >= ? AND end <= ? ORDER BY start", start, end)
 	if err != nil {
 		return result, err
 	}
@@ -376,12 +376,12 @@ func (d TBDB) DeleteBoxAndSpans(name string) error {
 	if err != nil {
 		return err
 	}
-	stmt, err = db.Prepare("DELETE FROM spans WHERE name = ?")
+	stmt, err = db.Prepare("DELETE FROM spans WHERE box = ?")
 	_, err = stmt.Exec(name)
 	return err
 }
 
-func (d TBDB) DeleteSpan(start, end int64, name string) error {
+func (d TBDB) DeleteSpan(start, end int64, box string) error {
 	db, err := sql.Open(d.driver, d.name)
 	if err != nil {
 		return err
@@ -392,7 +392,7 @@ func (d TBDB) DeleteSpan(start, end int64, name string) error {
 
 		}
 	}(db)
-	stmt, err := db.Prepare("DELETE FROM boxes WHERE start = ? AND end = ? AND name = ? ")
-	_, err = stmt.Exec(start, end, name)
+	stmt, err := db.Prepare("DELETE FROM spans WHERE start = ? AND end = ? AND box = ? ")
+	_, err = stmt.Exec(start, end, box)
 	return err
 }
