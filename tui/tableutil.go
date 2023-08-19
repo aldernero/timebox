@@ -47,7 +47,8 @@ func makeBoxSummaryTable(tb util.TimeBox, p util.Period) table.Model {
 		if n.IsEmpty() {
 			panic("empty span set")
 		}
-		usedTime := tb.GetSpansForBox(val, timespan).Duration()
+		spans := tb.GetSpansForBox(val, timespan)
+		usedTime := spans.Duration()
 		rows = append(rows, makeBoxSummaryRow(val, minTime, maxTime, usedTime))
 	}
 	return table.New([]table.Column{
@@ -88,7 +89,7 @@ func makeTimelineTable(tb util.TimeBox, p util.Period) table.Model {
 	timespan := util.PeriodSoFar(p, time.January)
 	spans := tb.GetSpansForTimespan(timespan)
 	for _, val := range spans.Spans {
-		rows = append(rows, makeTimelineRow(val.Name, val.Start, val.End))
+		rows = append(rows, makeTimelineRow(val.Box, val.Start, val.End))
 	}
 	return table.New([]table.Column{
 		table.NewFlexColumn(columnKeyBox, "Box", columnWidthBox),

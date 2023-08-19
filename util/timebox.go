@@ -52,7 +52,7 @@ func (tb TimeBox) GetSpansForTimespan(span Span) SpanSet {
 		panic(err)
 	}
 	for _, sr := range spanRow {
-		spans.Add(Span{time.Unix(sr.Start, 0), time.Unix(sr.End, 0)})
+		spans.Add(Span{time.Unix(sr.Start, 0), time.Unix(sr.End, 0), sr.Box})
 	}
 	return spans
 }

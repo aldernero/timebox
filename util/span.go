@@ -8,6 +8,7 @@ import (
 type Span struct {
 	Start time.Time
 	End   time.Time
+	Box   string
 }
 
 func (s Span) Duration() time.Duration {
