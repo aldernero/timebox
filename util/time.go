@@ -31,12 +31,6 @@ const (
 	ColorDurationSeconds = "#FFFF5F"
 )
 
-var DurationYearStyle = lipgloss.NewStyle().
-	Foreground(lipgloss.Color(ColorDurationYears)).
-	Render
-var DurationDayStyle = lipgloss.NewStyle().
-	Foreground(lipgloss.Color(ColorDurationDays)).
-	Render
 var DurationHourStyle = lipgloss.NewStyle().
 	Foreground(lipgloss.Color(ColorDurationHours)).
 	Render
@@ -125,34 +119,22 @@ func ThisYearStart() time.Time {
 //goland:noinspection SpellCheckingInspection
 func DurationParser(d time.Duration) string {
 	dsec := int(d.Seconds())
-	years := dsec / secondsPerYear
-	days := (dsec - years*secondsPerYear) / secondsPerDay
-	hours := (dsec - years*secondsPerYear - days*secondsPerDay) / secondsPerHour
-	minutes := (dsec - years*secondsPerYear - days*secondsPerDay - hours*secondsPerHour) / secondsPerMinute
-	seconds := dsec - years*secondsPerYear - days*secondsPerDay - hours*secondsPerHour - minutes*secondsPerMinute
-	Y := DurationYearStyle(fmt.Sprintf("%dy", years))
-	D := DurationDayStyle(fmt.Sprintf("%dd", days))
+	hours := dsec / secondsPerHour
+	minutes := (dsec - hours*secondsPerHour) / secondsPerMinute
+	seconds := dsec - hours*secondsPerHour - minutes*secondsPerMinute
 	H := DurationHourStyle(fmt.Sprintf("%dh", hours))
 	M := DurationMinuteStyle(fmt.Sprintf("%dm", minutes))
 	S := DurationSecondStyle(fmt.Sprintf("%ds", seconds))
 	var result string
-	if years > 0 {
-		result = Y + D + H + M + S
-		//result = fmt.Sprintf("%dy%dd%dh%dm%ds", years, days, hours, minutes, seconds)
-	}
-	if years == 0 && days > 0 {
-		result = D + H + M + S
-		//result = fmt.Sprintf("%dd%dh%dm%ds", days, hours, minutes, seconds)
-	}
-	if years == 0 && days == 0 && hours > 0 {
+	if hours > 0 {
 		result = H + M + S
 		//result = fmt.Sprintf("%dh%dm%ds", hours, minutes, seconds)
 	}
-	if years == 0 && days == 0 && hours == 0 && minutes > 0 {
+	if hours == 0 && minutes > 0 {
 		result = M + S
 		//result = fmt.Sprintf("%dm%ds", minutes, seconds)
 	}
-	if years == 0 && days == 0 && hours == 0 && minutes == 0 {
+	if hours == 0 && minutes == 0 {
 		result = S
 		//result = fmt.Sprintf("%ds", seconds)
 	}

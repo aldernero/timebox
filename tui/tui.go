@@ -13,6 +13,7 @@ type Model struct {
 	state     crudState
 	view      viewMode
 	currScope string
+	period    util.TimePeriod
 	tb        util.TimeBox
 	tbl       table.Model
 	addPrompt AddPrompt
@@ -21,10 +22,11 @@ type Model struct {
 
 func New(tb util.TimeBox) Model {
 	return Model{
-		state: nav,
-		view:  boxSummary,
-		tb:    tb,
-		tbl:   makeBoxSummaryTable(tb, util.Week),
+		state:  nav,
+		view:   boxSummary,
+		period: util.TimePeriod{Period: util.Week},
+		tb:     tb,
+		tbl:    makeBoxSummaryTable(tb, util.Week),
 	}
 }
 
@@ -113,6 +115,16 @@ func (m Model) updateAdd(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m Model) updateNav(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
+	case reloadWithStatusMsg:
+		switch m.view {
+		case boxSummary:
+			m.tbl = makeBoxSummaryTable(m.tb, m.period.Period)
+		case boxView:
+			m.tbl = makeBoxViewTable(m.tb, m.currScope, m.period.Period)
+		case timeline:
+			m.tbl = makeTimelineTable(m.tb, m.period.Period)
+		}
+		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c":
@@ -131,6 +143,14 @@ func (m Model) updateNav(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.view = boxSummary
 				m.tbl = makeBoxSummaryTable(m.tb, util.Week)
 			}
+		case "tab":
+			m.period.Next()
+			cmd = reloadWithStatusCmd(fmt.Sprintf("Period: %s", m.period))
+			return m, cmd
+		case "shift+tab":
+			m.period.Previous()
+			cmd = reloadWithStatusCmd(fmt.Sprintf("Period: %s", m.period))
+			return m, cmd
 		case "a":
 			m.state = add
 			switch m.view {
