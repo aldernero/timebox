@@ -277,7 +277,7 @@ func (d TBDB) GetSpansForBox(boxName string) ([]SpanRow, error) {
 	if err != nil {
 		return result, err
 	}
-	rows, err := db.Query("SELECT * FROM spans WHERE box = ? AND start >= ?", box.Name, box.CreateTime)
+	rows, err := db.Query("SELECT * FROM spans WHERE box = ?", box.Name)
 	if err != nil {
 		return result, err
 	}

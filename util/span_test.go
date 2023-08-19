@@ -1,10 +1,28 @@
 package util
 
 import (
+	"fmt"
+	"github.com/aldernero/timebox/db"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 )
+
+const dbName = "test.db"
+
+func setup(t *testing.T) db.TBDB {
+	tempDir, err := os.MkdirTemp(os.TempDir(), "timebox")
+	require.NoError(t, err)
+	testdb := filepath.Join(tempDir, filepath.FromSlash(dbName))
+	err = os.Remove(testdb)
+	require.NoFileExists(t, testdb)
+	tbdb := db.NewDBWithName(testdb)
+	require.NoError(t, tbdb.CreateDB())
+	return tbdb
+}
 
 func TestSpan_Duration(t *testing.T) {
 	tests := map[string]struct {
@@ -259,4 +277,107 @@ func TestSpan_GetOverlap(t *testing.T) {
 			assert.True(t, tc.want.IsEqual(got))
 		})
 	}
+}
+
+func TestSpanSet_Duration(t *testing.T) {
+	tests := map[string]struct {
+		spans SpanSet
+		want  time.Duration
+	}{
+		"empty": {
+			spans: SpanSet{},
+			want:  0,
+		},
+		"one": {
+			spans: SpanSet{
+				Spans: []Span{
+					{
+						Start: time.Date(2023, time.January, 1, 0, 0, 0, 0, time.Local),
+						End:   time.Date(2023, time.January, 1, 1, 0, 0, 0, time.Local),
+					},
+				},
+			},
+			want: time.Hour,
+		},
+		"two": {
+			spans: SpanSet{
+				Spans: []Span{
+					{
+						Start: time.Date(2023, time.January, 1, 0, 0, 0, 0, time.Local),
+						End:   time.Date(2023, time.January, 1, 1, 0, 0, 0, time.Local),
+					},
+					{
+						Start: time.Date(2023, time.January, 1, 2, 0, 0, 0, time.Local),
+						End:   time.Date(2023, time.January, 1, 3, 0, 0, 0, time.Local),
+					},
+				},
+			},
+			want: 2 * time.Hour,
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			got := tc.spans.Duration()
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}
+
+func TestAllSpansFromDB(t *testing.T) {
+	tbdb := setup(t)
+	for i := 0; i < 4; i++ {
+		boxName := fmt.Sprintf("box%d", i)
+		err := tbdb.AddBox(boxName, 100, 1000)
+		require.NoError(t, err)
+		for j := 0; j < 4; j++ {
+			start := time.Date(2023, time.January, 1, i, j, 0, 0, time.Local)
+			end := time.Date(2023, time.January, 1, i, j+1, 0, 0, time.Local)
+			err := tbdb.AddSpan(start.Unix(), end.Unix(), boxName)
+			require.NoError(t, err)
+		}
+	}
+	spans := AllSpansFromDB(tbdb)
+	assert.Equal(t, 4, len(spans))
+	for i := 0; i < 4; i++ {
+		boxName := fmt.Sprintf("box%d", i)
+		assert.Equal(t, 4, spans[boxName].Size())
+	}
+}
+
+func TestAllSpansFromDBForTimeRange(t *testing.T) {
+	tbdb := setup(t)
+	span1 := Span{
+		Start: time.Date(2023, time.January, 1, 0, 0, 0, 0, time.Local),
+		End:   time.Date(2023, time.January, 1, 1, 0, 0, 0, time.Local),
+	}
+	span2 := Span{
+		Start: time.Date(2023, time.January, 1, 2, 0, 0, 0, time.Local),
+		End:   time.Date(2023, time.January, 1, 3, 0, 0, 0, time.Local),
+	}
+	span3 := Span{
+		Start: time.Date(2023, time.January, 1, 4, 0, 0, 0, time.Local),
+		End:   time.Date(2023, time.January, 1, 5, 0, 0, 0, time.Local),
+	}
+	span4 := Span{
+		Start: time.Date(2023, time.January, 1, 6, 0, 0, 0, time.Local),
+		End:   time.Date(2023, time.January, 1, 7, 0, 0, 0, time.Local),
+	}
+	for i := 0; i < 4; i++ {
+		boxName := fmt.Sprintf("box%d", i)
+		err := tbdb.AddBox(boxName, 100, 1000)
+		require.NoError(t, err)
+	}
+	err := tbdb.AddSpan(span1.Start.Unix(), span1.End.Unix(), "box1")
+	require.NoError(t, err)
+	err = tbdb.AddSpan(span2.Start.Unix(), span2.End.Unix(), "box1")
+	require.NoError(t, err)
+	err = tbdb.AddSpan(span3.Start.Unix(), span3.End.Unix(), "box2")
+	require.NoError(t, err)
+	err = tbdb.AddSpan(span4.Start.Unix(), span4.End.Unix(), "box3")
+	require.NoError(t, err)
+	spanRow, err := tbdb.GetSpansForTimeRange(span1.Start.Unix(), span4.End.Unix())
+	require.NoError(t, err)
+	assert.Equal(t, 4, len(spanRow))
+	spans := AllSpansFromDBForTimeRange(tbdb, span1.Start, span4.End)
+	assert.Equal(t, 4, spans.Size())
 }

@@ -44,8 +44,18 @@ type SpanSet struct {
 	Spans []Span
 }
 
+func NewSpanSet() SpanSet {
+	return SpanSet{
+		Spans: []Span{},
+	}
+}
+
 func (s SpanSet) IsEmpty() bool {
 	return len(s.Spans) == 0
+}
+
+func (s SpanSet) Size() int {
+	return len(s.Spans)
 }
 
 func (s SpanSet) Add(span Span) {
@@ -67,13 +77,13 @@ func AllSpansFromDB(tbdb db.TBDB) map[string]SpanSet {
 		panic(err)
 	}
 	for _, br := range brs {
-		spanset := SpanSet{}
+		spanset := NewSpanSet()
 		srs, err := tbdb.GetSpansForBox(br.Name)
 		if err != nil {
 			panic(err)
 		}
 		for _, sr := range srs {
-			spanset.Add(Span{
+			spanset.Spans = append(spanset.Spans, Span{
 				Start: time.Unix(sr.Start, 0),
 				End:   time.Unix(sr.End, 0),
 			})
@@ -83,14 +93,14 @@ func AllSpansFromDB(tbdb db.TBDB) map[string]SpanSet {
 	return result
 }
 
-func AllSpansFromDBForTimeRange(tbdb db.TBDB, start, end int64) SpanSet {
-	result := SpanSet{}
-	srs, err := tbdb.GetSpansForTimeRange(start, end)
+func AllSpansFromDBForTimeRange(tbdb db.TBDB, start, end time.Time) SpanSet {
+	result := NewSpanSet()
+	srs, err := tbdb.GetSpansForTimeRange(start.Unix(), end.Unix())
 	if err != nil {
 		panic(err)
 	}
 	for _, sr := range srs {
-		result.Add(Span{
+		result.Spans = append(result.Spans, Span{
 			Start: time.Unix(sr.Start, 0),
 			End:   time.Unix(sr.End, 0),
 		})
