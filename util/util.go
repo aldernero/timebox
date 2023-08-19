@@ -82,6 +82,7 @@ func (b BoxSpec) RandomSpan(day time.Time) Span {
 	return Span{
 		Start: startTime,
 		End:   startTime.Add(spanDuration),
+		Box:   b.Name,
 	}
 }
 

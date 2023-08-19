@@ -8,7 +8,6 @@ import (
 var dbName = "timebox.db"
 
 func main() {
-
 	timebox := util.TimeBoxFromDB(dbName)
 	tui.StartTea(timebox)
 }
