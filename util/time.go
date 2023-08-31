@@ -16,17 +16,19 @@ const (
 )
 
 const (
-	secondsPerYear       = 31557600 // 365.25 days
-	secondsPerWeek       = 604800
-	secondsPerDay        = 86400
-	secondsPerHour       = 3600
-	secondsPerMinute     = 60
-	monthsPerWeek        = 0.2301 // estimate for faster calculation
-	quartersPerWeek      = 0.0767 // estimate for faster calculation
-	yearsPerWeek         = 0.0192 // estimate for faster calculation
-	ColorDurationHours   = "#FF0087"
-	ColorDurationMinutes = "#00D7FF"
-	ColorDurationSeconds = "#FFFF5F"
+	secondsPerYear        = 31557600 // 365.25 days
+	secondsPerWeek        = 604800
+	secondsPerDay         = 86400
+	secondsPerHour        = 3600
+	secondsPerMinute      = 60
+	monthsPerWeek         = 0.2301 // estimate for faster calculation
+	quartersPerWeek       = 0.0767 // estimate for faster calculation
+	yearsPerWeek          = 0.0192 // estimate for faster calculation
+	ColorDurationHours    = "#FF0087"
+	ColorDurationMinutes  = "#00D7FF"
+	ColorDurationSeconds  = "#FFFF5F"
+	ColorPeriodForeground = "#BAEBDA"
+	ColorPeriodHighlight  = "#DE3E93"
 )
 
 var DurationHourStyle = lipgloss.NewStyle().
@@ -38,6 +40,16 @@ var DurationMinuteStyle = lipgloss.NewStyle().
 var DurationSecondStyle = lipgloss.NewStyle().
 	Foreground(lipgloss.Color(ColorDurationSeconds)).
 	Render
+var PeriodStyle = lipgloss.NewStyle().
+	Foreground(lipgloss.Color(ColorPeriodForeground)).
+	Padding(0, 1)
+var CurrentPeriodStyle = lipgloss.NewStyle().
+	Foreground(lipgloss.Color(ColorPeriodForeground)).
+	Background(lipgloss.Color(ColorPeriodHighlight)).
+	Padding(0, 1)
+var PeriodPickerStyle = lipgloss.NewStyle().
+	PaddingRight(1).
+	Align(lipgloss.Right)
 
 type TimePeriod struct {
 	Period
@@ -68,9 +80,9 @@ func (t *TimePeriod) View() string {
 	var result string
 	for i, name := range t.Names() {
 		if i == t.Current() {
-			result += fmt.Sprintf("[%s] ", name)
+			result += CurrentPeriodStyle.Render(name) + " "
 		} else {
-			result += fmt.Sprintf("%s ", name)
+			result += PeriodStyle.Render(name) + " "
 		}
 	}
 	return result

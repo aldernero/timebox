@@ -2,6 +2,16 @@ package tui
 
 import "github.com/charmbracelet/lipgloss"
 
+const (
+	ShortCutKeyColor  = "#47A4AC"
+	ShortCutDescColor = "#BAEBDA"
+)
+
+var ShortcutKeyStyle = lipgloss.NewStyle().
+	Foreground(lipgloss.Color(ShortCutKeyColor))
+var ShortcutDescStyle = lipgloss.NewStyle().
+	Foreground(lipgloss.Color(ShortCutDescColor))
+
 type Shortcut struct {
 	Key       string
 	Desc      string
@@ -13,8 +23,8 @@ func NewShortcut(key, desc string) Shortcut {
 	return Shortcut{
 		Key:       key,
 		Desc:      desc,
-		KeyStyle:  lipgloss.NewStyle().Foreground(lipgloss.Color("#00D7FF")),
-		DescStyle: lipgloss.NewStyle().Foreground(lipgloss.Color("#FF0087")),
+		KeyStyle:  ShortcutKeyStyle,
+		DescStyle: ShortcutDescStyle,
 	}
 }
 

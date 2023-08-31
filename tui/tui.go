@@ -246,7 +246,7 @@ func (m Model) updateDel(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m Model) mainView() string {
 	return lipgloss.JoinVertical(
 		lipgloss.Top,
-		lipgloss.JoinHorizontal(lipgloss.Left, logo, m.helpString()),
+		lipgloss.JoinHorizontal(lipgloss.Left, LogoStyle.Render(logo), m.helpString()),
 		m.tbl.View(),
 		m.period.View())
 }
