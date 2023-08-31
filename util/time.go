@@ -24,8 +24,6 @@ const (
 	monthsPerWeek        = 0.2301 // estimate for faster calculation
 	quartersPerWeek      = 0.0767 // estimate for faster calculation
 	yearsPerWeek         = 0.0192 // estimate for faster calculation
-	ColorDurationYears   = "#8FE8E6"
-	ColorDurationDays    = "#FF9812"
 	ColorDurationHours   = "#FF0087"
 	ColorDurationMinutes = "#00D7FF"
 	ColorDurationSeconds = "#FFFF5F"
@@ -60,6 +58,22 @@ func (t *TimePeriod) Next() {
 
 func (t *TimePeriod) Previous() {
 	t.Period = (t.Period + 3) % 4
+}
+
+func (t *TimePeriod) String() string {
+	return t.Names()[t.Current()]
+}
+
+func (t *TimePeriod) View() string {
+	var result string
+	for i, name := range t.Names() {
+		if i == t.Current() {
+			result += fmt.Sprintf("[%s] ", name)
+		} else {
+			result += fmt.Sprintf("%s ", name)
+		}
+	}
+	return result
 }
 
 // WeekStart calculates the time at the beginning of the week for a given time
@@ -128,15 +142,12 @@ func DurationParser(d time.Duration) string {
 	var result string
 	if hours > 0 {
 		result = H + M + S
-		//result = fmt.Sprintf("%dh%dm%ds", hours, minutes, seconds)
 	}
 	if hours == 0 && minutes > 0 {
 		result = M + S
-		//result = fmt.Sprintf("%dm%ds", minutes, seconds)
 	}
 	if hours == 0 && minutes == 0 {
 		result = S
-		//result = fmt.Sprintf("%ds", seconds)
 	}
 	return result
 }

@@ -23,6 +23,8 @@ const (
 	ColorHelpText         = "#ABABAB"
 	ColorShortcuts        = "#47A4AC"
 	ColorSession          = "#FFDF80"
+	ShortCutKeyColor      = "#47A4AC"
+	ShortCutDescColor     = "#BAEBDA"
 )
 
 var LogoStyle = lipgloss.NewStyle().
@@ -78,3 +80,7 @@ var SessionTextStyle = lipgloss.NewStyle().
 var HelpBlockStyle = lipgloss.NewStyle().
 	PaddingLeft(8).
 	PaddingRight(1)
+var ShortcutKeyStyle = lipgloss.NewStyle().
+	Foreground(lipgloss.Color(ShortCutKeyColor))
+var ShortcutDescStyle = lipgloss.NewStyle().
+	Foreground(lipgloss.Color(ShortCutDescColor))

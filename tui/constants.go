@@ -16,3 +16,17 @@ const (
 	boxView
 	timeline
 )
+
+// Common shortcuts
+var (
+	addShortcut        = NewShortcut("a", "Add")
+	delShortcut        = NewShortcut("d", "Delete")
+	editShortcut       = NewShortcut("e", "Edit")
+	deleteShortcut     = NewShortcut("d", "Delete")
+	quitShortcut       = NewShortcut("q", "Quit")
+	periodShortcut     = NewShortcut("Tab", "Period")
+	enterShortcut      = NewShortcut("Enter", "Spans")
+	backShortcut       = NewShortcut("Esc", "Back")
+	boxSummaryShortcut = NewShortcut("b", "Boxes")
+	timelineShortcut   = NewShortcut("t", "Timeline")
+)

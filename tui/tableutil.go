@@ -14,9 +14,9 @@ const (
 	columnKeyStart  = "start"
 	columnKeyEnd    = "end"
 	columnKeyDur    = "dur"
-	columnWidthBox  = 20
+	columnWidthBox  = 24
 	columnWidthTime = 20
-	columnWidthDur  = 17
+	columnWidthDur  = 12
 )
 
 func makeBoxSummaryRow(box string, min, max, use time.Duration) table.Row {
@@ -31,8 +31,8 @@ func makeBoxSummaryRow(box string, min, max, use time.Duration) table.Row {
 func makeTimelineRow(box string, start time.Time, end time.Time) table.Row {
 	return table.NewRow(table.RowData{
 		columnKeyBox:   box,
-		columnKeyStart: start,
-		columnKeyEnd:   end,
+		columnKeyStart: start.Format(time.DateTime),
+		columnKeyEnd:   end.Format(time.DateTime),
 		columnKeyDur:   util.DurationParser(end.Sub(start)),
 	})
 }
@@ -49,10 +49,10 @@ func makeBoxSummaryTable(tb util.TimeBox, p util.Period) table.Model {
 		rows = append(rows, makeBoxSummaryRow(val, minTime, maxTime, usedTime))
 	}
 	return table.New([]table.Column{
-		table.NewFlexColumn(columnKeyBox, "Box", columnWidthBox),
-		table.NewFlexColumn(columnKeyMin, "Min", columnWidthDur),
-		table.NewFlexColumn(columnKeyMax, "Max", columnWidthDur),
-		table.NewFlexColumn(columnKeyUse, "Used", columnWidthDur),
+		table.NewFlexColumn(columnKeyBox, "Box", 2),
+		table.NewFlexColumn(columnKeyMin, "Min", 1),
+		table.NewFlexColumn(columnKeyMax, "Max", 1),
+		table.NewFlexColumn(columnKeyUse, "Used", 1),
 	}).WithRows(rows).
 		BorderRounded().
 		WithBaseStyle(TableStyle).
@@ -69,10 +69,10 @@ func makeBoxViewTable(tb util.TimeBox, boxName string, p util.Period) table.Mode
 		rows = append(rows, makeTimelineRow(boxName, val.Start, val.End))
 	}
 	return table.New([]table.Column{
-		table.NewFlexColumn(columnKeyBox, "Box", columnWidthBox),
+		table.NewFlexColumn(columnKeyBox, "Box", 2),
 		table.NewColumn(columnKeyStart, "Start", columnWidthTime),
 		table.NewColumn(columnKeyEnd, "End", columnWidthTime),
-		table.NewFlexColumn(columnKeyDur, "Duration", columnWidthDur),
+		table.NewFlexColumn(columnKeyDur, "Duration", 1),
 	}).WithRows(rows).
 		BorderRounded().
 		WithBaseStyle(TableStyle).

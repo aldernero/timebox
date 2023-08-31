@@ -1,13 +1,18 @@
 package tui
 
 import (
+	_ "embed"
 	"fmt"
 	"github.com/aldernero/timebox/util"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/evertras/bubble-table/table"
 	"log"
 	"os"
 )
+
+//go:embed timebox.txt
+var logo string
 
 type Model struct {
 	state     crudState
@@ -63,7 +68,7 @@ func (m Model) View() string {
 	case add: // create
 		return m.addPrompt.View()
 	case nav: // read
-		return m.tbl.View()
+		return m.mainView()
 	case edit: // update
 		return m.addPrompt.View()
 	case del: // delete
@@ -145,11 +150,11 @@ func (m Model) updateNav(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "tab":
 			m.period.Next()
-			cmd = reloadWithStatusCmd(fmt.Sprintf("Period: %s", m.period))
+			cmd = reloadWithStatusCmd(fmt.Sprintf("Period: %s", m.period.String()))
 			return m, cmd
 		case "shift+tab":
 			m.period.Previous()
-			cmd = reloadWithStatusCmd(fmt.Sprintf("Period: %s", m.period))
+			cmd = reloadWithStatusCmd(fmt.Sprintf("Period: %s", m.period.String()))
 			return m, cmd
 		case "a":
 			m.state = add
@@ -236,6 +241,33 @@ func (m Model) updateDel(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.state = nav
 	}
 	return m, cmd
+}
+
+func (m Model) mainView() string {
+	return lipgloss.JoinVertical(
+		lipgloss.Top,
+		lipgloss.JoinHorizontal(lipgloss.Left, logo, m.helpString()),
+		m.tbl.View(),
+		m.period.View())
+}
+
+func (m Model) helpString() string {
+	var result string
+	switch m.view {
+	case boxSummary:
+		row1 := ShortcutRow([]Shortcut{addShortcut, editShortcut, deleteShortcut, quitShortcut})
+		row2 := ShortcutRow([]Shortcut{enterShortcut, periodShortcut, timelineShortcut})
+		result = lipgloss.NewStyle().PaddingTop(1).Render(lipgloss.JoinHorizontal(lipgloss.Top, row1, row2))
+	case boxView:
+		row1 := ShortcutRow([]Shortcut{addShortcut, editShortcut, deleteShortcut, quitShortcut})
+		row2 := ShortcutRow([]Shortcut{backShortcut, periodShortcut})
+		result = lipgloss.NewStyle().PaddingTop(1).Render(lipgloss.JoinHorizontal(lipgloss.Top, row1, row2))
+	case timeline:
+		row1 := ShortcutRow([]Shortcut{editShortcut, deleteShortcut, quitShortcut})
+		row2 := ShortcutRow([]Shortcut{boxSummaryShortcut, periodShortcut, timelineShortcut})
+		result = lipgloss.NewStyle().PaddingTop(1).Render(lipgloss.JoinHorizontal(lipgloss.Top, row1, row2))
+	}
+	return result
 }
 
 func (m Model) getSelectedBoxName() string {
