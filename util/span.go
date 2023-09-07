@@ -1,6 +1,7 @@
 package util
 
 import (
+	"fmt"
 	"github.com/aldernero/timebox/db"
 	"time"
 )
@@ -38,11 +39,23 @@ func (s Span) GetOverlap(span Span) Span {
 }
 
 func (s Span) String() string {
-	return s.Start.Format(time.RFC3339) + " - " + s.End.Format(time.RFC3339)
+	return fmt.Sprintf("%s: %s - %s", s.Box, s.Start.Format(time.RFC3339), s.End.Format(time.RFC3339))
+}
+
+func (s Span) Key() string {
+	return fmt.Sprintf("%s-%d-%d", s.Box, s.Start.Unix(), s.End.Unix())
 }
 
 type SpanSet struct {
-	Spans []Span
+	Spans  []Span          // list for table loads
+	lookup map[string]Span // map for fast lookups
+}
+
+func NewSpanSet() SpanSet {
+	return SpanSet{
+		Spans:  make([]Span, 0),
+		lookup: make(map[string]Span),
+	}
 }
 
 func (s *SpanSet) IsEmpty() bool {
@@ -54,7 +67,20 @@ func (s *SpanSet) Size() int {
 }
 
 func (s *SpanSet) Add(span Span) {
-	s.Spans = append(s.Spans, span)
+	key := span.Key()
+	if _, ok := s.lookup[key]; !ok {
+		s.lookup[key] = span
+		s.Spans = append(s.Spans, span)
+		return
+	} else {
+		panic(fmt.Sprintf("Span already exists: %s", key))
+	}
+}
+
+func (s *SpanSet) HasSpan(span Span) bool {
+	key := span.Key()
+	_, ok := s.lookup[key]
+	return ok
 }
 
 func (s *SpanSet) Duration() time.Duration {
@@ -65,6 +91,19 @@ func (s *SpanSet) Duration() time.Duration {
 	return time.Duration(seconds) * time.Second
 }
 
+func (s *SpanSet) Remove(span Span) {
+	key := span.Key()
+	if _, ok := s.lookup[key]; ok {
+		delete(s.lookup, key)
+		for i, val := range s.Spans {
+			if val.Key() == key {
+				s.Spans = append(s.Spans[:i], s.Spans[i+1:]...)
+				return
+			}
+		}
+	}
+}
+
 func AllSpansFromDB(tbdb db.TBDB) map[string]SpanSet {
 	result := make(map[string]SpanSet)
 	brs, err := tbdb.GetAllBoxes()
@@ -72,7 +111,7 @@ func AllSpansFromDB(tbdb db.TBDB) map[string]SpanSet {
 		panic(err)
 	}
 	for _, br := range brs {
-		spanset := SpanSet{}
+		spanset := NewSpanSet()
 		srs, err := tbdb.GetSpansForBox(br.Name)
 		if err != nil {
 			panic(err)
@@ -82,10 +121,6 @@ func AllSpansFromDB(tbdb db.TBDB) map[string]SpanSet {
 				Start: time.Unix(sr.Start, 0),
 				End:   time.Unix(sr.End, 0),
 			})
-			//spanset.Spans = append(spanset.Spans, Span{
-			//	Start: time.Unix(sr.Start, 0),
-			//	End:   time.Unix(sr.End, 0),
-			//})
 		}
 		result[br.Name] = spanset
 	}
@@ -93,7 +128,7 @@ func AllSpansFromDB(tbdb db.TBDB) map[string]SpanSet {
 }
 
 func AllSpansFromDBForTimeRange(tbdb db.TBDB, start, end time.Time) SpanSet {
-	var result SpanSet
+	result := NewSpanSet()
 	srs, err := tbdb.GetSpansForTimeRange(start.Unix(), end.Unix())
 	if err != nil {
 		panic(err)
@@ -103,10 +138,6 @@ func AllSpansFromDBForTimeRange(tbdb db.TBDB, start, end time.Time) SpanSet {
 			Start: time.Unix(sr.Start, 0),
 			End:   time.Unix(sr.End, 0),
 		})
-		//result.Spans = append(result.Spans, Span{
-		//	Start: time.Unix(sr.Start, 0),
-		//	End:   time.Unix(sr.End, 0),
-		//})
 	}
 	return result
 }

@@ -6,14 +6,13 @@ import (
 )
 
 type DeletePrompt struct {
-	category  string
-	item      string
+	txt       string
 	HasAnswer bool
 	Answer    bool
 }
 
-func NewDeletePrompt(category, item string) DeletePrompt {
-	return DeletePrompt{category: category, item: item}
+func NewDeletePrompt(txt string) DeletePrompt {
+	return DeletePrompt{txt: txt}
 }
 
 func (m DeletePrompt) Init() tea.Cmd {
@@ -39,8 +38,8 @@ func (m DeletePrompt) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m DeletePrompt) View() string {
 	return DeleteStyle(
 		fmt.Sprintf(
-			"Are you sure you want to delete %s: %s? (y/n)",
-			m.category,
-			m.item),
+			"Are you sure you want to delete this (y/n)\n\n%s",
+			m.txt,
+		),
 	)
 }

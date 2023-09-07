@@ -9,6 +9,7 @@ import (
 	"github.com/evertras/bubble-table/table"
 	"log"
 	"os"
+	"time"
 )
 
 //go:embed timebox.txt
@@ -171,7 +172,10 @@ func (m Model) updateNav(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch m.view {
 			case boxSummary:
 				boxName := m.getSelectedBoxName()
-				m.delPrompt = NewDeletePrompt("box", boxName)
+				m.delPrompt = NewDeletePrompt(fmt.Sprintf("Box: %s", boxName))
+			case boxView | timeline:
+				span := m.getSelectedSpan()
+				m.delPrompt = NewDeletePrompt(fmt.Sprintf("Span: %s", span.String()))
 			}
 		case "b":
 			m.view = boxSummary
@@ -230,13 +234,32 @@ func (m Model) updateDel(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.delPrompt = mdl.(DeletePrompt)
 	if m.delPrompt.HasAnswer {
 		if m.delPrompt.Answer {
-			boxName := m.getSelectedBoxName()
-			err := m.tb.DeleteBox(boxName)
-			if err != nil {
-				log.Fatal(err)
+			switch m.view {
+			case boxSummary:
+				boxName := m.getSelectedBoxName()
+				err := m.tb.DeleteBox(boxName)
+				if err != nil {
+					log.Fatal(err)
+				}
+				m.tb = util.TimeBoxFromDB(m.tb.Fname)
+				m.tbl = makeBoxSummaryTable(m.tb, m.period.Period)
+			case boxView:
+				span := m.getSelectedSpan()
+				err := m.tb.DeleteSpan(span)
+				if err != nil {
+					log.Fatal(err)
+				}
+				m.tb = util.TimeBoxFromDB(m.tb.Fname)
+				m.tbl = makeBoxSummaryTable(m.tb, m.period.Period)
+			case timeline:
+				span := m.getSelectedSpan()
+				err := m.tb.DeleteSpan(span)
+				if err != nil {
+					log.Fatal(err)
+				}
+				m.tb = util.TimeBoxFromDB(m.tb.Fname)
+				m.tbl = makeTimelineTable(m.tb, m.period.Period)
 			}
-			m.tb = util.TimeBoxFromDB(m.tb.Fname)
-			m.tbl = makeBoxSummaryTable(m.tb, util.Week)
 		}
 		m.state = nav
 	}
@@ -278,4 +301,24 @@ func (m Model) getSelectedBoxName() string {
 func (m Model) getSelectedBox() util.Box {
 	boxName := m.getSelectedBoxName()
 	return m.tb.Boxes[boxName]
+}
+
+func (m Model) getSelectedSpan() util.Span {
+	row := m.tbl.HighlightedRow()
+	boxName := row.Data[columnKeyBox].(string)
+	startStr := row.Data[columnKeyStart].(string)
+	endStr := row.Data[columnKeyEnd].(string)
+	startTime, err := time.Parse(time.DateTime, startStr)
+	if err != nil {
+		panic(err)
+	}
+	endTime, err := time.Parse(time.DateTime, endStr)
+	if err != nil {
+		panic(err)
+	}
+	return util.Span{
+		Start: startTime,
+		End:   endTime,
+		Box:   boxName,
+	}
 }

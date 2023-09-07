@@ -285,7 +285,7 @@ func TestSpanSet_Duration(t *testing.T) {
 		want  time.Duration
 	}{
 		"empty": {
-			spans: SpanSet{},
+			spans: NewSpanSet(),
 			want:  0,
 		},
 		"one": {

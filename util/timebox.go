@@ -24,7 +24,7 @@ func TimeBoxFromDB(dbname string) TimeBox {
 }
 
 func (tb TimeBox) GetSpansForBox(box string, span Span) SpanSet {
-	var spans SpanSet
+	spans := NewSpanSet()
 	boxSpans := tb.Spans[box]
 
 	for _, s := range boxSpans.Spans {
@@ -37,7 +37,7 @@ func (tb TimeBox) GetSpansForBox(box string, span Span) SpanSet {
 }
 
 func (tb TimeBox) GetSpansForTimespan(span Span) SpanSet {
-	var spans SpanSet
+	spans := NewSpanSet()
 	start := span.Start.Unix()
 	end := span.End.Unix()
 	spanRow, err := tb.tbdb.GetSpansForTimeRange(start, end)
@@ -99,10 +99,22 @@ func (tb TimeBox) AddSpan(span Span, box string) error {
 		return err
 	}
 	if _, ok := tb.Spans[box]; !ok {
-		tb.Spans[box] = SpanSet{}
+		tb.Spans[box] = NewSpanSet()
 	}
 	spanset := tb.Spans[box]
 	spanset.Add(span)
+	tb.Spans[box] = spanset
+	return nil
+}
+
+func (tb TimeBox) DeleteSpan(span Span) error {
+	box := span.Box
+	err := tb.tbdb.DeleteSpan(span.Start.Unix(), span.End.Unix(), box)
+	if err != nil {
+		return err
+	}
+	spanset := tb.Spans[box]
+	spanset.Remove(span)
 	tb.Spans[box] = spanset
 	return nil
 }
