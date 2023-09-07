@@ -1,15 +1,19 @@
 package tui
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	"fmt"
+	tea "github.com/charmbracelet/bubbletea"
+)
 
 type DeletePrompt struct {
-	text      string
+	category  string
+	item      string
 	HasAnswer bool
 	Answer    bool
 }
 
-func NewDeletePrompt(txt string) DeletePrompt {
-	return DeletePrompt{text: txt}
+func NewDeletePrompt(category, item string) DeletePrompt {
+	return DeletePrompt{category: category, item: item}
 }
 
 func (m DeletePrompt) Init() tea.Cmd {
@@ -33,5 +37,10 @@ func (m DeletePrompt) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m DeletePrompt) View() string {
-	return "Are you sure you want to delete " + m.text + "? (y/n)"
+	return DeleteStyle(
+		fmt.Sprintf(
+			"Are you sure you want to delete %s: %s? (y/n)",
+			m.category,
+			m.item),
+	)
 }

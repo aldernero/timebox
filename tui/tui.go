@@ -171,7 +171,7 @@ func (m Model) updateNav(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch m.view {
 			case boxSummary:
 				boxName := m.getSelectedBoxName()
-				m.delPrompt = NewDeletePrompt(boxName)
+				m.delPrompt = NewDeletePrompt("box", boxName)
 			}
 		case "b":
 			m.view = boxSummary

@@ -39,6 +39,14 @@ var InputStyle = lipgloss.NewStyle().
 	Border(lipgloss.RoundedBorder(), true, true, true, true).
 	BorderForeground(lipgloss.Color(ColorPromptBorder)).
 	Render
+var DeleteStyle = lipgloss.NewStyle().
+	Margin(1, 1).
+	Padding(1, 2).
+	Foreground(lipgloss.Color(ColorPromptBorder)).
+	Align(lipgloss.Center).
+	Border(lipgloss.RoundedBorder(), true, true, true, true).
+	BorderForeground(lipgloss.Color(ColorPromptBorder)).
+	Render
 var PromptStyle = lipgloss.NewStyle().
 	Width(UIWidth).
 	Align(lipgloss.Center)
