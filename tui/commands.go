@@ -2,13 +2,6 @@ package tui
 
 import tea "github.com/charmbracelet/bubbletea"
 
-type errMsg struct {
-	error
-}
-
-type modeChangedMsg struct {
-}
-
 type cancelMsg struct {
 }
 

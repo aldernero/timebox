@@ -39,7 +39,7 @@ func (m DeletePrompt) View() string {
 	return DeleteStyle(
 		fmt.Sprintf(
 			"Are you sure you want to delete this (y/n)\n\n%s",
-			m.txt,
+			DeleteStyle(m.txt),
 		),
 	)
 }

@@ -30,3 +30,31 @@ var (
 	boxSummaryShortcut = NewShortcut("b", "Boxes")
 	timelineShortcut   = NewShortcut("t", "Timeline")
 )
+
+func printCrudState(s crudState) string {
+	switch s {
+	case add:
+		return "Add"
+	case nav:
+		return "Read"
+	case edit:
+		return "Edit"
+	case del:
+		return "Delete"
+	default:
+		return "Unknown"
+	}
+}
+
+func printViewMode(v viewMode) string {
+	switch v {
+	case boxSummary:
+		return "Box Summary"
+	case boxView:
+		return "Box View"
+	case timeline:
+		return "Timeline"
+	default:
+		return "Unknown"
+	}
+}

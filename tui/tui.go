@@ -173,7 +173,7 @@ func (m Model) updateNav(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case boxSummary:
 				boxName := m.getSelectedBoxName()
 				m.delPrompt = NewDeletePrompt(fmt.Sprintf("Box: %s", boxName))
-			case boxView | timeline:
+			case boxView:
 				span := m.getSelectedSpan()
 				m.delPrompt = NewDeletePrompt(fmt.Sprintf("Span: %s", span.String()))
 			}
@@ -271,7 +271,9 @@ func (m Model) mainView() string {
 		lipgloss.Top,
 		lipgloss.JoinHorizontal(lipgloss.Left, LogoStyle.Render(logo), m.helpString()),
 		m.tbl.View(),
-		m.period.View())
+		m.period.View(),
+		printCrudState(m.state),
+		printViewMode(m.view))
 }
 
 func (m Model) helpString() string {
