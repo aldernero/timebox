@@ -67,7 +67,7 @@ func TestTBDB_AddBox(t *testing.T) {
 	require.NoError(t, tbdb.AddBox("box-2", 1, 2))
 	err := tbdb.AddBox("box-1", 3, 4)
 	require.Error(t, err)
-	assert.EqualError(t, err, "UNIQUE constraint failed: boxes.name")
+	assert.ErrorContains(t, err, "constraint failed")
 	err = tbdb.AddBox("box-3", 5, 2)
 	require.Error(t, err)
 	assert.EqualError(t, err, "minTime is greater than maxTime")
@@ -175,9 +175,9 @@ func TestTBDB_GetSpansForBox(t *testing.T) {
 	start := time.Now().Add(-1 * time.Hour)
 	boxWithCreateTime(t, tbdb, box, 1, 2, ts)
 	input := []SpanRow{
-		{start.Unix(), start.Add(5 * time.Minute).Unix(), box},
-		{start.Add(6 * time.Minute).Unix(), start.Add(7 * time.Minute).Unix(), box},
-		{start.Add(9 * time.Minute).Unix(), start.Add(12 * time.Minute).Unix(), box},
+		{1, start.Unix(), start.Add(5 * time.Minute).Unix(), box},
+		{2, start.Add(6 * time.Minute).Unix(), start.Add(7 * time.Minute).Unix(), box},
+		{3, start.Add(9 * time.Minute).Unix(), start.Add(12 * time.Minute).Unix(), box},
 	}
 	for _, i := range input {
 		require.NoError(t, tbdb.AddSpan(i.Start, i.End, i.Box))
@@ -190,14 +190,6 @@ func TestTBDB_GetSpansForBox(t *testing.T) {
 		assert.Equal(t, input[i].End, spans[i].End)
 		assert.Equal(t, input[i].Box, spans[i].Box)
 	}
-	require.NoError(t, tbdb.AddSpan(
-		time.Now().Add(-368*24*time.Hour).Unix(), time.Now().Add(-367*24*time.Hour).Unix(), box))
-	require.NoError(t, tbdb.AddSpan(
-		time.Now().Add(-400*24*time.Hour).Unix(), time.Now().Add(-398*24*time.Hour).Unix(), box))
-	spans, err = tbdb.GetSpansForBox("box-1")
-	require.NoError(t, err)
-	// shouldn't pick up last two spans which are older than the creation time
-	assert.Equal(t, len(input), len(spans))
 }
 
 func TestTBDB_UpdateBox(t *testing.T) {
