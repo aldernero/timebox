@@ -3,13 +3,14 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	_ "github.com/mattn/go-sqlite3"
+	//_ "github.com/mattn/go-sqlite3"
 	"log"
+	_ "modernc.org/sqlite"
 	"os"
 	"time"
 )
 
-const defaultDriver = "sqlite3"
+const defaultDriver = "sqlite"
 
 // TBDB is the base struct for the database
 type TBDB struct {
@@ -18,6 +19,7 @@ type TBDB struct {
 }
 
 type SpanRow struct {
+	ID    int64
 	Start int64
 	End   int64
 	Box   string
@@ -61,7 +63,7 @@ func (d TBDB) CreateDB() error {
 	}(db)
 	// ledger table, stores spans of time spent on a given box
 	sqlStmt := `
-	CREATE TABLE spans (start INTEGER NOT NULL, end INTEGER NOT NULL, box TEXT NOT NULL);
+	CREATE TABLE spans (id INTEGER PRIMARY KEY AUTOINCREMENT, start INTEGER NOT NULL, end INTEGER NOT NULL, box TEXT NOT NULL);
 	`
 	_, err = db.Exec(sqlStmt)
 	if err != nil {
@@ -282,13 +284,14 @@ func (d TBDB) GetSpansForBox(boxName string) ([]SpanRow, error) {
 		return result, err
 	}
 	for rows.Next() {
+		var id int64
 		var name string
 		var start, end int64
-		err := rows.Scan(&start, &end, &name)
+		err := rows.Scan(&id, &start, &end, &name)
 		if err != nil {
 			return result, err
 		}
-		result = append(result, SpanRow{start, end, name})
+		result = append(result, SpanRow{id, start, end, name})
 	}
 	return result, nil
 }
@@ -310,13 +313,14 @@ func (d TBDB) GetSpansForTimeRange(start, end int64) ([]SpanRow, error) {
 		return result, err
 	}
 	for rows.Next() {
+		var id int64
 		var name string
 		var start, end int64
-		err := rows.Scan(&start, &end, &name)
+		err := rows.Scan(&id, &start, &end, &name)
 		if err != nil {
 			return result, err
 		}
-		result = append(result, SpanRow{start, end, name})
+		result = append(result, SpanRow{id, start, end, name})
 	}
 	return result, nil
 }
