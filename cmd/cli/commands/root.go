@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 	"os"
 	"path"
+	"time"
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
@@ -16,6 +17,17 @@ var (
 	dbFile  string
 	tb      util.TimeBox
 )
+
+type CliFlags struct {
+	boxName     string
+	minDuration time.Duration
+	maxDuration time.Duration
+	startTime   string
+	endTime     string
+	period      util.TimePeriod
+}
+
+var cliFlags CliFlags
 
 var rootCmd = &cobra.Command{
 	Use:              "",
@@ -40,6 +52,7 @@ func init() {
 	// subcommands
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(listCmd)
+	rootCmd.AddCommand(addCmd)
 }
 
 func initConfig() {

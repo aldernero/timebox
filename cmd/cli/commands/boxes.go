@@ -6,6 +6,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
 	"github.com/spf13/cobra"
+	"log"
 )
 
 var headerStyle = lipgloss.NewStyle().
@@ -46,7 +47,24 @@ var addBoxCmd = &cobra.Command{
 	Use:   "box",
 	Short: "Add a new box",
 	Run: func(cmd *cobra.Command, args []string) {
-
+		if cliFlags.boxName == "" {
+			log.Fatal("box name is required")
+		}
+		if ok := tb.Boxes[cliFlags.boxName]; ok.Name != "" {
+			log.Fatalf("box \"%s\" already exists", cliFlags.boxName)
+		}
+		if cliFlags.minDuration >= cliFlags.maxDuration {
+			log.Fatal("min duration must be less than max duration")
+		}
+		box := util.Box{
+			Name:    cliFlags.boxName,
+			MinTime: cliFlags.minDuration,
+			MaxTime: cliFlags.maxDuration,
+		}
+		err := tb.AddBox(box)
+		if err != nil {
+			log.Fatal(err)
+		}
 	},
 }
 
