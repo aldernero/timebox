@@ -2,7 +2,7 @@ package tui
 
 import (
 	"fmt"
-	"github.com/aldernero/timebox/util"
+	util2 "github.com/aldernero/timebox/pkg/util"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"os"
@@ -29,12 +29,12 @@ const (
 
 type AddPrompt struct {
 	mode         promptType
-	State        util.PromptState
+	State        util2.PromptState
 	focusedField inputFields
 	editMode     bool
 	inputs       []textinput.Model
 	status       string
-	Result       util.InputResult
+	Result       util2.InputResult
 }
 
 func AddBox() AddPrompt {
@@ -64,11 +64,11 @@ func AddBox() AddPrompt {
 		}
 		m.inputs[i] = t
 	}
-	m.State = util.InUse
+	m.State = util2.InUse
 	return m
 }
 
-func EditBox(box util.Box) AddPrompt {
+func EditBox(box util2.Box) AddPrompt {
 	var m AddPrompt
 	m.editMode = true
 	m.inputs = make([]textinput.Model, 3)
@@ -97,7 +97,7 @@ func EditBox(box util.Box) AddPrompt {
 		m.inputs[i] = t
 	}
 	m.focusedField = minField
-	m.State = util.InUse
+	m.State = util2.InUse
 	return m
 }
 
@@ -130,7 +130,7 @@ func AddSpan(boxName string) AddPrompt {
 		m.inputs[i] = t
 	}
 	m.focusedField = minField
-	m.State = util.InUse
+	m.State = util2.InUse
 	return m
 }
 
@@ -164,7 +164,7 @@ func (m AddPrompt) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "enter":
 			switch m.focusedField {
 			case cancelButton:
-				m.State = util.WasCancelled
+				m.State = util2.WasCancelled
 				return m, nil
 			case submitButton:
 				checkInput = true
@@ -178,16 +178,16 @@ func (m AddPrompt) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if err != nil {
 				m.status = err.Error()
 			}
-			m.Result = util.NewInputResultBox(box)
-			m.State = util.HasResult
+			m.Result = util2.NewInputResultBox(box)
+			m.State = util2.HasResult
 			return m, nil
 		case spanInput:
 			span, err := m.validateSpanInputs()
 			if err != nil {
 				m.status = err.Error()
 			}
-			m.Result = util.NewInputResultSpan(span)
-			m.State = util.HasResult
+			m.Result = util2.NewInputResultSpan(span)
+			m.State = util2.HasResult
 			return m, nil
 		}
 	}
@@ -275,8 +275,8 @@ func (m AddPrompt) resetInputs() {
 	m.status = ""
 }
 
-func (m AddPrompt) validateBoxInputs() (util.Box, error) {
-	var box util.Box
+func (m AddPrompt) validateBoxInputs() (util2.Box, error) {
+	var box util2.Box
 	name := m.inputs[0].Value()
 	min := m.inputs[1].Value()
 	max := m.inputs[2].Value()
@@ -291,27 +291,27 @@ func (m AddPrompt) validateBoxInputs() (util.Box, error) {
 	if err != nil {
 		return box, fmt.Errorf("invalid duration: %v", err)
 	}
-	box = util.Box{Name: name, MinTime: minTime, MaxTime: maxTime}
+	box = util2.Box{Name: name, MinTime: minTime, MaxTime: maxTime}
 	return box, nil
 }
 
-func (m AddPrompt) validateSpanInputs() (util.Span, error) {
-	var span util.Span
+func (m AddPrompt) validateSpanInputs() (util2.Span, error) {
+	var span util2.Span
 	name := m.inputs[0].Value()
 	min := m.inputs[1].Value()
 	max := m.inputs[2].Value()
 	if name == "" || min == "" || max == "" {
 		return span, fmt.Errorf("empty fields")
 	}
-	minTime, err := util.ParseTime(min)
+	minTime, err := util2.ParseTime(min)
 	if err != nil {
 		return span, fmt.Errorf("invalid duration: %v", err)
 	}
-	maxTime, err := util.ParseTime(max)
+	maxTime, err := util2.ParseTime(max)
 	if err != nil {
 		return span, fmt.Errorf("invalid duration: %v", err)
 	}
-	span = util.Span{
+	span = util2.Span{
 		Start: minTime,
 		End:   maxTime,
 		Box:   name,

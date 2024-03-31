@@ -3,7 +3,7 @@ package tui
 import (
 	_ "embed"
 	"fmt"
-	"github.com/aldernero/timebox/util"
+	util2 "github.com/aldernero/timebox/pkg/util"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/evertras/bubble-table/table"
@@ -19,24 +19,24 @@ type Model struct {
 	state     crudState
 	view      viewMode
 	currScope string
-	period    util.TimePeriod
-	tb        util.TimeBox
+	period    util2.TimePeriod
+	tb        util2.TimeBox
 	tbl       table.Model
 	addPrompt AddPrompt
 	delPrompt DeletePrompt
 }
 
-func New(tb util.TimeBox) Model {
+func New(tb util2.TimeBox) Model {
 	return Model{
 		state:  nav,
 		view:   boxSummary,
-		period: util.TimePeriod{Period: util.Week},
+		period: util2.TimePeriod{Period: util2.Week},
 		tb:     tb,
-		tbl:    makeBoxSummaryTable(tb, util.Week),
+		tbl:    makeBoxSummaryTable(tb, util2.Week),
 	}
 }
 
-func StartTea(tb util.TimeBox) {
+func StartTea(tb util2.TimeBox) {
 	p := tea.NewProgram(New(tb), tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		fmt.Println("Error running program:", err)
@@ -91,9 +91,9 @@ func (m Model) updateAdd(msg tea.Msg) (tea.Model, tea.Cmd) {
 	mdl, cmd := m.addPrompt.Update(msg)
 	m.addPrompt = mdl.(AddPrompt)
 	switch m.addPrompt.State {
-	case util.WasCancelled:
+	case util2.WasCancelled:
 		m.state = nav
-	case util.HasResult:
+	case util2.HasResult:
 		switch m.view {
 		case boxSummary:
 			res := m.addPrompt.Result
@@ -101,8 +101,8 @@ func (m Model) updateAdd(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if err != nil {
 				log.Fatal(err)
 			}
-			m.tb = util.TimeBoxFromDB(m.tb.Fname)
-			m.tbl = makeBoxSummaryTable(m.tb, util.Week)
+			m.tb = util2.TimeBoxFromDB(m.tb.Fname)
+			m.tbl = makeBoxSummaryTable(m.tb, util2.Week)
 			m.state = nav
 		case boxView:
 			res := m.addPrompt.Result
@@ -110,8 +110,8 @@ func (m Model) updateAdd(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if err != nil {
 				log.Fatal(err)
 			}
-			m.tb = util.TimeBoxFromDB(m.tb.Fname)
-			m.tbl = makeBoxViewTable(m.tb, m.currScope, util.Week)
+			m.tb = util2.TimeBoxFromDB(m.tb.Fname)
+			m.tbl = makeBoxViewTable(m.tb, m.currScope, util2.Week)
 			m.state = nav
 		}
 	}
@@ -142,12 +142,12 @@ func (m Model) updateNav(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.view = boxView
 				boxName := m.getSelectedBoxName()
 				m.currScope = boxName
-				m.tbl = makeBoxViewTable(m.tb, boxName, util.Week)
+				m.tbl = makeBoxViewTable(m.tb, boxName, util2.Week)
 			}
 		case "esc":
 			if m.view == boxView || m.view == timeline {
 				m.view = boxSummary
-				m.tbl = makeBoxSummaryTable(m.tb, util.Week)
+				m.tbl = makeBoxSummaryTable(m.tb, util2.Week)
 			}
 		case "tab":
 			m.period.Next()
@@ -179,10 +179,10 @@ func (m Model) updateNav(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "b":
 			m.view = boxSummary
-			m.tbl = makeBoxSummaryTable(m.tb, util.Week)
+			m.tbl = makeBoxSummaryTable(m.tb, util2.Week)
 		case "t":
 			m.view = timeline
-			m.tbl = makeTimelineTable(m.tb, util.Week)
+			m.tbl = makeTimelineTable(m.tb, util2.Week)
 		case "e":
 			m.state = edit
 			box := m.getSelectedBox()
@@ -206,16 +206,16 @@ func (m Model) updateEdit(msg tea.Msg) (tea.Model, tea.Cmd) {
 	mdl, cmd := m.addPrompt.Update(msg)
 	m.addPrompt = mdl.(AddPrompt)
 	switch m.addPrompt.State {
-	case util.WasCancelled:
+	case util2.WasCancelled:
 		m.state = nav
-	case util.HasResult:
+	case util2.HasResult:
 		res := m.addPrompt.Result
 		err := m.tb.UpdateBox(res.Box())
 		if err != nil {
 			log.Fatal(err)
 		}
-		m.tb = util.TimeBoxFromDB(m.tb.Fname)
-		m.tbl = makeBoxSummaryTable(m.tb, util.Week)
+		m.tb = util2.TimeBoxFromDB(m.tb.Fname)
+		m.tbl = makeBoxSummaryTable(m.tb, util2.Week)
 		m.state = nav
 	}
 	return m, cmd
@@ -241,7 +241,7 @@ func (m Model) updateDel(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if err != nil {
 					log.Fatal(err)
 				}
-				m.tb = util.TimeBoxFromDB(m.tb.Fname)
+				m.tb = util2.TimeBoxFromDB(m.tb.Fname)
 				m.tbl = makeBoxSummaryTable(m.tb, m.period.Period)
 			case boxView:
 				span := m.getSelectedSpan()
@@ -249,7 +249,7 @@ func (m Model) updateDel(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if err != nil {
 					log.Fatal(err)
 				}
-				m.tb = util.TimeBoxFromDB(m.tb.Fname)
+				m.tb = util2.TimeBoxFromDB(m.tb.Fname)
 				m.tbl = makeBoxSummaryTable(m.tb, m.period.Period)
 			case timeline:
 				span := m.getSelectedSpan()
@@ -257,7 +257,7 @@ func (m Model) updateDel(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if err != nil {
 					log.Fatal(err)
 				}
-				m.tb = util.TimeBoxFromDB(m.tb.Fname)
+				m.tb = util2.TimeBoxFromDB(m.tb.Fname)
 				m.tbl = makeTimelineTable(m.tb, m.period.Period)
 			}
 		}
@@ -300,12 +300,12 @@ func (m Model) getSelectedBoxName() string {
 	return row.Data[columnKeyBox].(string)
 }
 
-func (m Model) getSelectedBox() util.Box {
+func (m Model) getSelectedBox() util2.Box {
 	boxName := m.getSelectedBoxName()
 	return m.tb.Boxes[boxName]
 }
 
-func (m Model) getSelectedSpan() util.Span {
+func (m Model) getSelectedSpan() util2.Span {
 	row := m.tbl.HighlightedRow()
 	boxName := row.Data[columnKeyBox].(string)
 	startStr := row.Data[columnKeyStart].(string)
@@ -318,7 +318,7 @@ func (m Model) getSelectedSpan() util.Span {
 	if err != nil {
 		panic(err)
 	}
-	return util.Span{
+	return util2.Span{
 		Start: startTime,
 		End:   endTime,
 		Box:   boxName,

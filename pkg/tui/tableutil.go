@@ -1,7 +1,7 @@
 package tui
 
 import (
-	"github.com/aldernero/timebox/util"
+	util2 "github.com/aldernero/timebox/pkg/util"
 	"github.com/evertras/bubble-table/table"
 	"time"
 )
@@ -24,7 +24,7 @@ func makeBoxSummaryRow(box string, min, max, use time.Duration) table.Row {
 		columnKeyBox: box,
 		columnKeyMin: min,
 		columnKeyMax: max,
-		columnKeyUse: util.DurationParser(use),
+		columnKeyUse: util2.DurationParser(use),
 	})
 }
 
@@ -33,14 +33,14 @@ func makeTimelineRow(box string, start time.Time, end time.Time) table.Row {
 		columnKeyBox:   box,
 		columnKeyStart: start.Format(time.DateTime),
 		columnKeyEnd:   end.Format(time.DateTime),
-		columnKeyDur:   util.DurationParser(end.Sub(start)),
+		columnKeyDur:   util2.DurationParser(end.Sub(start)),
 	})
 }
 
-func makeBoxSummaryTable(tb util.TimeBox, p util.Period) table.Model {
+func makeBoxSummaryTable(tb util2.TimeBox, p util2.Period) table.Model {
 	boxes := tb.Boxes
 	var rows []table.Row
-	timespan := util.PeriodSoFar(p, time.January)
+	timespan := util2.PeriodSoFar(p, time.January)
 	for _, val := range tb.Names {
 		box := boxes[val]
 		minTime, maxTime := box.ScaledTimes(p)
@@ -61,9 +61,9 @@ func makeBoxSummaryTable(tb util.TimeBox, p util.Period) table.Model {
 		Focused(true)
 }
 
-func makeBoxViewTable(tb util.TimeBox, boxName string, p util.Period) table.Model {
+func makeBoxViewTable(tb util2.TimeBox, boxName string, p util2.Period) table.Model {
 	var rows []table.Row
-	timespan := util.PeriodSoFar(p, time.January)
+	timespan := util2.PeriodSoFar(p, time.January)
 	spans := tb.GetSpansForBox(boxName, timespan)
 	for _, val := range spans.Spans {
 		rows = append(rows, makeTimelineRow(boxName, val.Start, val.End))
@@ -81,9 +81,9 @@ func makeBoxViewTable(tb util.TimeBox, boxName string, p util.Period) table.Mode
 		Focused(true)
 }
 
-func makeTimelineTable(tb util.TimeBox, p util.Period) table.Model {
+func makeTimelineTable(tb util2.TimeBox, p util2.Period) table.Model {
 	var rows []table.Row
-	timespan := util.PeriodSoFar(p, time.January)
+	timespan := util2.PeriodSoFar(p, time.January)
 	spans := tb.GetSpansForTimespan(timespan)
 	for _, val := range spans.Spans {
 		rows = append(rows, makeTimelineRow(val.Box, val.Start, val.End))

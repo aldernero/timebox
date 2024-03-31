@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/aldernero/timebox/tui"
-	"github.com/aldernero/timebox/util"
+	"github.com/aldernero/timebox/pkg/tui"
+	"github.com/aldernero/timebox/pkg/util"
 )
 
 var dbName = "timebox.db"

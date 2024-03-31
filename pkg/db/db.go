@@ -61,7 +61,7 @@ func (d TBDB) CreateDB() error {
 
 		}
 	}(db)
-	// ledger table, stores spans of time spent on a given box
+	// spans table, stores spans of time spent on a given box
 	sqlStmt := `
 	CREATE TABLE spans (id INTEGER PRIMARY KEY AUTOINCREMENT, start INTEGER NOT NULL, end INTEGER NOT NULL, box TEXT NOT NULL);
 	`

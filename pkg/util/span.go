@@ -2,7 +2,7 @@ package util
 
 import (
 	"fmt"
-	"github.com/aldernero/timebox/db"
+	"github.com/aldernero/timebox/pkg/db"
 	"time"
 )
 

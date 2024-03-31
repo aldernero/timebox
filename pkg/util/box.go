@@ -1,7 +1,7 @@
 package util
 
 import (
-	"github.com/aldernero/timebox/db"
+	"github.com/aldernero/timebox/pkg/db"
 	"time"
 )
 

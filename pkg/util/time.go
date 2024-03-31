@@ -148,9 +148,9 @@ func DurationParser(d time.Duration) string {
 	hours := dsec / secondsPerHour
 	minutes := (dsec - hours*secondsPerHour) / secondsPerMinute
 	seconds := dsec - hours*secondsPerHour - minutes*secondsPerMinute
-	H := DurationHourStyle(fmt.Sprintf("%dh", hours))
-	M := DurationMinuteStyle(fmt.Sprintf("%dm", minutes))
-	S := DurationSecondStyle(fmt.Sprintf("%ds", seconds))
+	H := fmt.Sprintf("%dh", hours)
+	M := fmt.Sprintf("%dm", minutes)
+	S := fmt.Sprintf("%ds", seconds)
 	var result string
 	if hours > 0 {
 		result = H + M + S

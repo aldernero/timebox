@@ -1,7 +1,7 @@
 package util
 
 import (
-	"github.com/aldernero/timebox/db"
+	"github.com/aldernero/timebox/pkg/db"
 	"time"
 )
 
@@ -21,6 +21,13 @@ func TimeBoxFromDB(dbname string) TimeBox {
 	tb.Names, tb.Boxes = AllBoxesFromDB(tb.tbdb)
 	tb.Spans = AllSpansFromDB(tb.tbdb)
 	return tb
+}
+
+func (tb TimeBox) SyncFromDB() {
+	tb.tbdb = db.NewDBWithName(tb.Fname)
+	tb.tbdb.Init()
+	tb.Names, tb.Boxes = AllBoxesFromDB(tb.tbdb)
+	tb.Spans = AllSpansFromDB(tb.tbdb)
 }
 
 func (tb TimeBox) GetSpansForBox(box string, span Span) SpanSet {
