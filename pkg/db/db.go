@@ -416,3 +416,22 @@ func (d TBDB) DeleteSpanByID(id int64) error {
 	_, err = stmt.Exec(id)
 	return err
 }
+
+func (d TBDB) UpdateSpan(id, start, end int64, box string) error {
+	db, err := sql.Open(d.driver, d.name)
+	if err != nil {
+		return err
+	}
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+
+		}
+	}(db)
+	stmt, err := db.Prepare("UPDATE spans SET start = ?, end = ?, box = ? WHERE id = ?")
+	if err != nil {
+		return err
+	}
+	_, err = stmt.Exec(start, end, box, id)
+	return err
+}

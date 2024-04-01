@@ -121,6 +121,7 @@ func AllSpansFromDB(tbdb db.TBDB) (map[string]SpanSet, map[int64]Span) {
 				ID:    sr.ID,
 				Start: time.Unix(sr.Start, 0),
 				End:   time.Unix(sr.End, 0),
+				Box:   sr.Box,
 			}
 			spanset.Add(span)
 			spanMap[sr.ID] = span

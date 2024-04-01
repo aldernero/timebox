@@ -1,6 +1,7 @@
 package util
 
 import (
+	"errors"
 	"github.com/aldernero/timebox/pkg/db"
 	"time"
 )
@@ -138,6 +139,24 @@ func (tb TimeBox) DeleteSpan(span Span) error {
 
 func (tb TimeBox) DeleteSpanByID(id int64) error {
 	err := tb.tbdb.DeleteSpanByID(id)
+	if err != nil {
+		return err
+	}
+	tb.SyncFromDB()
+	return nil
+}
+
+func (tb TimeBox) UpdateSpan(span Span) error {
+	// check if span overlaps with any other spans
+	for k, v := range tb.Spans {
+		if k == span.ID {
+			continue
+		}
+		if v.Overlaps(span) {
+			return errors.New("updated span overlaps with an existing span")
+		}
+	}
+	err := tb.tbdb.UpdateSpan(span.ID, span.Start.Unix(), span.End.Unix(), span.Box)
 	if err != nil {
 		return err
 	}

@@ -142,7 +142,38 @@ var deleteSpanCmd = &cobra.Command{
 var updateSpanCmd = &cobra.Command{
 	Use:   "span",
 	Short: "Update a span",
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
+			log.Fatal(err)
+		}
+		span, ok := tb.Spans[int64(id)]
+		if !ok {
+			log.Fatalf("span with ID %d does not exist", id)
+		}
+		fmt.Println("Updating span", span.String())
+		if cliFlags.startTime != "" {
+			start, err := util.ParseTime(cliFlags.startTime)
+			if err != nil {
+				log.Fatal(err)
+			}
+			span.Start = start
+		}
+		if cliFlags.endTime != "" {
+			end, err := util.ParseTime(cliFlags.endTime)
+			if err != nil {
+				log.Fatal(err)
+			}
+			span.End = end
+		}
+		if cliFlags.boxName != "" {
+			span.Box = cliFlags.boxName
+		}
+		fmt.Println("New span", span.String())
+		err = tb.UpdateSpan(span)
+		if err != nil {
+			log.Fatal(err)
+		}
 	},
 }

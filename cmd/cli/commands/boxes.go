@@ -110,7 +110,29 @@ var deleteBoxCmd = &cobra.Command{
 var updateBoxCmd = &cobra.Command{
 	Use:   "box",
 	Short: "Update a box",
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-
+		boxName := args[0]
+		box, ok := tb.Boxes[boxName]
+		if !ok {
+			log.Fatalf("box \"%s\" does not exist", boxName)
+		}
+		if cliFlags.maxDuration > 0 && (cliFlags.minDuration >= cliFlags.maxDuration) {
+			log.Fatal("min duration must be less than max duration")
+		}
+		if cliFlags.minDuration == 0 && cliFlags.maxDuration == 0 {
+			fmt.Println("No changes made")
+			return
+		}
+		if cliFlags.minDuration != 0 {
+			box.MinTime = cliFlags.minDuration
+		}
+		if cliFlags.maxDuration != 0 {
+			box.MaxTime = cliFlags.maxDuration
+		}
+		err := tb.UpdateBox(box)
+		if err != nil {
+			log.Fatal(err)
+		}
 	},
 }
