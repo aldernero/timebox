@@ -7,6 +7,7 @@ import (
 )
 
 type Span struct {
+	ID    int64
 	Start time.Time
 	End   time.Time
 	Box   string
@@ -39,22 +40,18 @@ func (s Span) GetOverlap(span Span) Span {
 }
 
 func (s Span) String() string {
-	return fmt.Sprintf("%s: %s - %s", s.Box, s.Start.Format(time.RFC3339), s.End.Format(time.RFC3339))
-}
-
-func (s Span) Key() string {
-	return fmt.Sprintf("%s-%d-%d", s.Box, s.Start.Unix(), s.End.Unix())
+	return fmt.Sprintf("[%d] %s: %s - %s", s.ID, s.Box, s.Start.Format(time.RFC3339), s.End.Format(time.RFC3339))
 }
 
 type SpanSet struct {
-	Spans  []Span          // list for table loads
-	lookup map[string]Span // map for fast lookups
+	Spans  []Span         // list for table loads
+	lookup map[int64]Span // map for fast lookups
 }
 
 func NewSpanSet() SpanSet {
 	return SpanSet{
 		Spans:  make([]Span, 0),
-		lookup: make(map[string]Span),
+		lookup: make(map[int64]Span),
 	}
 }
 
@@ -67,19 +64,22 @@ func (s *SpanSet) Size() int {
 }
 
 func (s *SpanSet) Add(span Span) {
-	key := span.Key()
-	if _, ok := s.lookup[key]; !ok {
-		s.lookup[key] = span
+	if _, ok := s.lookup[span.ID]; !ok {
+		s.lookup[span.ID] = span
 		s.Spans = append(s.Spans, span)
 		return
 	} else {
-		panic(fmt.Sprintf("Span already exists: %s", key))
+		panic(fmt.Sprintf("Span already exists: %s", span.String()))
 	}
 }
 
 func (s *SpanSet) HasSpan(span Span) bool {
-	key := span.Key()
-	_, ok := s.lookup[key]
+	_, ok := s.lookup[span.ID]
+	return ok
+}
+
+func (s *SpanSet) HasID(id int64) bool {
+	_, ok := s.lookup[id]
 	return ok
 }
 
@@ -92,11 +92,10 @@ func (s *SpanSet) Duration() time.Duration {
 }
 
 func (s *SpanSet) Remove(span Span) {
-	key := span.Key()
-	if _, ok := s.lookup[key]; ok {
-		delete(s.lookup, key)
+	if _, ok := s.lookup[span.ID]; ok {
+		delete(s.lookup, span.ID)
 		for i, val := range s.Spans {
-			if val.Key() == key {
+			if val.ID == span.ID {
 				s.Spans = append(s.Spans[:i], s.Spans[i+1:]...)
 				return
 			}
@@ -104,8 +103,9 @@ func (s *SpanSet) Remove(span Span) {
 	}
 }
 
-func AllSpansFromDB(tbdb db.TBDB) map[string]SpanSet {
-	result := make(map[string]SpanSet)
+func AllSpansFromDB(tbdb db.TBDB) (map[string]SpanSet, map[int64]Span) {
+	spanSetMap := make(map[string]SpanSet)
+	spanMap := make(map[int64]Span)
 	brs, err := tbdb.GetAllBoxes()
 	if err != nil {
 		panic(err)
@@ -117,14 +117,17 @@ func AllSpansFromDB(tbdb db.TBDB) map[string]SpanSet {
 			panic(err)
 		}
 		for _, sr := range srs {
-			spanset.Add(Span{
+			span := Span{
+				ID:    sr.ID,
 				Start: time.Unix(sr.Start, 0),
 				End:   time.Unix(sr.End, 0),
-			})
+			}
+			spanset.Add(span)
+			spanMap[sr.ID] = span
 		}
-		result[br.Name] = spanset
+		spanSetMap[br.Name] = spanset
 	}
-	return result
+	return spanSetMap, spanMap
 }
 
 func AllSpansFromDBForTimeRange(tbdb db.TBDB, start, end time.Time) SpanSet {
@@ -135,6 +138,7 @@ func AllSpansFromDBForTimeRange(tbdb db.TBDB, start, end time.Time) SpanSet {
 	}
 	for _, sr := range srs {
 		result.Add(Span{
+			ID:    sr.ID,
 			Start: time.Unix(sr.Start, 0),
 			End:   time.Unix(sr.End, 0),
 		})

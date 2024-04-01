@@ -247,7 +247,7 @@ func (d TBDB) GetAllBoxes() ([]BoxRow, error) {
 
 		}
 	}(db)
-	rows, err := db.Query("SELECT * FROM boxes")
+	rows, err := db.Query("SELECT * FROM boxes ORDER BY createTime DESC")
 	if err != nil {
 		return result, err
 	}
@@ -279,7 +279,7 @@ func (d TBDB) GetSpansForBox(boxName string) ([]SpanRow, error) {
 	if err != nil {
 		return result, err
 	}
-	rows, err := db.Query("SELECT * FROM spans WHERE box = ?", box.Name)
+	rows, err := db.Query("SELECT * FROM spans WHERE box = ? ORDER BY start", box.Name)
 	if err != nil {
 		return result, err
 	}
@@ -313,14 +313,14 @@ func (d TBDB) GetSpansForTimeRange(start, end int64) ([]SpanRow, error) {
 		return result, err
 	}
 	for rows.Next() {
-		var id int64
+		id := -1
 		var name string
 		var start, end int64
 		err := rows.Scan(&id, &start, &end, &name)
 		if err != nil {
 			return result, err
 		}
-		result = append(result, SpanRow{id, start, end, name})
+		result = append(result, SpanRow{int64(id), start, end, name})
 	}
 	return result, nil
 }
@@ -398,5 +398,21 @@ func (d TBDB) DeleteSpan(start, end int64, box string) error {
 	}(db)
 	stmt, err := db.Prepare("DELETE FROM spans WHERE start = ? AND end = ? AND box = ? ")
 	_, err = stmt.Exec(start, end, box)
+	return err
+}
+
+func (d TBDB) DeleteSpanByID(id int64) error {
+	db, err := sql.Open(d.driver, d.name)
+	if err != nil {
+		return err
+	}
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+
+		}
+	}(db)
+	stmt, err := db.Prepare("DELETE FROM spans WHERE id = ? ")
+	_, err = stmt.Exec(id)
 	return err
 }

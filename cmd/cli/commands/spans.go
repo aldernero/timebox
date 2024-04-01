@@ -3,27 +3,65 @@ package commands
 import (
 	"fmt"
 	"github.com/aldernero/timebox/pkg/util"
+	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
 	"github.com/spf13/cobra"
 	"log"
+	"strconv"
+	"time"
 )
 
 var listSpansCmd = &cobra.Command{
 	Use:   "spans",
 	Short: "List spans",
 	Run: func(cmd *cobra.Command, args []string) {
-		var rows [][]string
-		for k, v := range tb.Spans {
-			for _, s := range v.Spans {
-				start := s.Start.Format("2006-01-02 15:04:05")
-				end := s.End.Format("2006-01-02 15:04:05")
-				rows = append(rows, []string{k, start, end})
+		var filterSpan util.Span
+		if cliFlags.startTime == "" {
+			filterSpan.Start = time.Time{}
+		} else {
+			from, err := util.ParseDurationOrTime(cliFlags.startTime)
+			if err != nil {
+				log.Fatal(err)
 			}
+			filterSpan.Start = from
+		}
+		if cliFlags.endTime == "" {
+			filterSpan.End = time.Now()
+		} else {
+			to, err := util.ParseDurationOrTime(cliFlags.endTime)
+			if err != nil {
+				log.Fatal(err)
+			}
+			filterSpan.End = to
+		}
+		var spanset util.SpanSet
+		if cliFlags.boxName != "" {
+			// check if box exists
+			if _, ok := tb.Boxes[cliFlags.boxName]; !ok {
+				log.Fatalf("box \"%s\" does not exist", cliFlags.boxName)
+			}
+			fullset := tb.GetSpansForTimespan(filterSpan)
+			spanset = util.NewSpanSet()
+			for _, s := range fullset.Spans {
+				if s.Box == cliFlags.boxName {
+					spanset.Add(s)
+				}
+			}
+		} else {
+			spanset = tb.GetSpansForTimespan(filterSpan)
+		}
+		var rows [][]string
+		for _, s := range spanset.Spans {
+			id := fmt.Sprintf("%d", s.ID)
+			start := s.Start.Format("2006-01-02 15:04:05")
+			end := s.End.Format("2006-01-02 15:04:05")
+			dur := s.End.Sub(s.Start).String()
+			rows = append(rows, []string{id, s.Box, start, end, dur})
 		}
 		t := table.New().
 			Border(lipgloss.NormalBorder()).
-			Headers("Box", "Start", "End").
+			Headers("ID", "Box", "Start", "End", "Duration").
 			StyleFunc(func(row, col int) lipgloss.Style {
 				return lipgloss.NewStyle().Margin(0, 1)
 			}).
@@ -68,8 +106,36 @@ var addSpanCmd = &cobra.Command{
 var deleteSpanCmd = &cobra.Command{
 	Use:   "span",
 	Short: "Delete a span",
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
+			log.Fatal(err)
+		}
+		var confirmed bool
+		form := huh.NewForm(
+			huh.NewGroup(
+				huh.NewConfirm().
+					Title("Are you sure you want to delete the span?").
+					Affirmative("Yes").
+					Negative("No").
+					Value(&confirmed),
+			),
+		)
+		if !cliFlags.force {
+			err := form.Run()
+			if err != nil {
+				log.Fatal(err)
+			}
+			if !confirmed {
+				fmt.Println("Cancelling span delete")
+				return
+			}
+		}
+		err = tb.DeleteSpanByID(int64(id))
+		if err != nil {
+			log.Fatal(err)
+		}
 	},
 }
 

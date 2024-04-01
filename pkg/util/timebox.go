@@ -6,11 +6,12 @@ import (
 )
 
 type TimeBox struct {
-	tbdb  db.TBDB
-	Fname string
-	Names []string
-	Boxes map[string]Box
-	Spans map[string]SpanSet
+	tbdb      db.TBDB
+	Fname     string
+	Names     []string
+	Boxes     map[string]Box
+	SpansSets map[string]SpanSet
+	Spans     map[int64]Span
 }
 
 func TimeBoxFromDB(dbname string) TimeBox {
@@ -19,7 +20,7 @@ func TimeBoxFromDB(dbname string) TimeBox {
 	tb.tbdb = db.NewDBWithName(dbname)
 	tb.tbdb.Init()
 	tb.Names, tb.Boxes = AllBoxesFromDB(tb.tbdb)
-	tb.Spans = AllSpansFromDB(tb.tbdb)
+	tb.SpansSets, tb.Spans = AllSpansFromDB(tb.tbdb)
 	return tb
 }
 
@@ -27,12 +28,12 @@ func (tb TimeBox) SyncFromDB() {
 	tb.tbdb = db.NewDBWithName(tb.Fname)
 	tb.tbdb.Init()
 	tb.Names, tb.Boxes = AllBoxesFromDB(tb.tbdb)
-	tb.Spans = AllSpansFromDB(tb.tbdb)
+	tb.SpansSets, tb.Spans = AllSpansFromDB(tb.tbdb)
 }
 
 func (tb TimeBox) GetSpansForBox(box string, span Span) SpanSet {
 	spans := NewSpanSet()
-	boxSpans := tb.Spans[box]
+	boxSpans := tb.SpansSets[box]
 
 	for _, s := range boxSpans.Spans {
 		overlap := s.GetOverlap(span)
@@ -52,14 +53,14 @@ func (tb TimeBox) GetSpansForTimespan(span Span) SpanSet {
 		panic(err)
 	}
 	for _, sr := range spanRow {
-		spans.Add(Span{time.Unix(sr.Start, 0), time.Unix(sr.End, 0), sr.Box})
+		spans.Add(Span{ID: sr.ID, Start: time.Unix(sr.Start, 0), End: time.Unix(sr.End, 0), Box: sr.Box})
 	}
 	return spans
 }
 
 func (tb TimeBox) GetSpans(span Span) map[string]SpanSet {
 	spans := make(map[string]SpanSet)
-	for box, spanset := range tb.Spans {
+	for box, spanset := range tb.SpansSets {
 		spans[box] = SpanSet{}
 		for _, s := range spanset.Spans {
 			overlap := s.GetOverlap(span)
@@ -100,17 +101,26 @@ func (tb TimeBox) DeleteBox(box string) error {
 	return nil
 }
 
+func (tb TimeBox) DeleteBoxAndSpans(box string) error {
+	err := tb.tbdb.DeleteBoxAndSpans(box)
+	if err != nil {
+		return err
+	}
+	tb.SyncFromDB()
+	return nil
+}
+
 func (tb TimeBox) AddSpan(span Span, box string) error {
 	err := tb.tbdb.AddSpan(span.Start.Unix(), span.End.Unix(), box)
 	if err != nil {
 		return err
 	}
-	if _, ok := tb.Spans[box]; !ok {
-		tb.Spans[box] = NewSpanSet()
+	if _, ok := tb.SpansSets[box]; !ok {
+		tb.SpansSets[box] = NewSpanSet()
 	}
-	spanset := tb.Spans[box]
+	spanset := tb.SpansSets[box]
 	spanset.Add(span)
-	tb.Spans[box] = spanset
+	tb.SpansSets[box] = spanset
 	return nil
 }
 
@@ -120,8 +130,17 @@ func (tb TimeBox) DeleteSpan(span Span) error {
 	if err != nil {
 		return err
 	}
-	spanset := tb.Spans[box]
+	spanset := tb.SpansSets[box]
 	spanset.Remove(span)
-	tb.Spans[box] = spanset
+	tb.SpansSets[box] = spanset
+	return nil
+}
+
+func (tb TimeBox) DeleteSpanByID(id int64) error {
+	err := tb.tbdb.DeleteSpanByID(id)
+	if err != nil {
+		return err
+	}
+	tb.SyncFromDB()
 	return nil
 }

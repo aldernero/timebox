@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"github.com/aldernero/timebox/pkg/util"
+	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
 	"github.com/spf13/cobra"
@@ -27,10 +28,11 @@ var listBoxesCmd = &cobra.Command{
 	Short: "List boxes",
 	Run: func(cmd *cobra.Command, args []string) {
 		var rows [][]string
-		for k, v := range tb.Boxes {
-			minTime := util.DurationParser(v.MinTime)
-			maxTime := util.DurationParser(v.MaxTime)
-			rows = append(rows, []string{k, minTime, maxTime})
+		for _, name := range tb.Names {
+			box := tb.Boxes[name]
+			minTime := util.DurationParser(box.MinTime)
+			maxTime := util.DurationParser(box.MaxTime)
+			rows = append(rows, []string{name, minTime, maxTime})
 		}
 		t := table.New().
 			Border(lipgloss.NormalBorder()).
@@ -71,8 +73,37 @@ var addBoxCmd = &cobra.Command{
 var deleteBoxCmd = &cobra.Command{
 	Use:   "box",
 	Short: "Delete a box",
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-
+		box := args[0]
+		_, ok := tb.Boxes[box]
+		if !ok {
+			log.Fatalf("box \"%s\" does not exist", box)
+		}
+		var confirmed bool
+		form := huh.NewForm(
+			huh.NewGroup(
+				huh.NewConfirm().
+					Title("Are you sure you want to delete the box?").
+					Affirmative("Yes").
+					Negative("No").
+					Value(&confirmed),
+			),
+		)
+		if !cliFlags.force {
+			err := form.Run()
+			if err != nil {
+				log.Fatal(err)
+			}
+			if !confirmed {
+				fmt.Println("Cancelling box delete")
+				return
+			}
+		}
+		err := tb.DeleteBoxAndSpans(box)
+		if err != nil {
+			log.Fatal(err)
+		}
 	},
 }
 

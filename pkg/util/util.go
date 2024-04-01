@@ -10,14 +10,30 @@ const (
 	timeFormatLong  = "2006-01-02 15:04:05"
 )
 
+func ParseDurationOrTime(s string) (time.Time, error) {
+	now := time.Now()
+	d, err := time.ParseDuration(s)
+	if err == nil {
+		return now.Add(-d), nil
+	}
+	return ParseTime(s)
+}
+
 func ParseTime(s string) (time.Time, error) {
+	var ts time.Time
 	timeFormat := timeFormatLong
 	if len(s) < len(timeFormatLong) {
-		timeFormat = timeFormatShort
+		now := time.Now()
+		ts, err := time.ParseInLocation(timeFormatShort, s, time.Local)
+		if err != nil {
+			return ts, err
+		}
+		ts = time.Date(now.Year(), now.Month(), now.Day(), ts.Hour(), ts.Minute(), ts.Second(), 0, time.Local)
+		return ts, nil
 	}
 	ts, err := time.ParseInLocation(timeFormat, s, time.Local)
 	if err != nil {
-		return time.Time{}, err
+		return ts, err
 	}
 	return ts, nil
 }

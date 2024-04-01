@@ -25,6 +25,7 @@ type CliFlags struct {
 	startTime   string
 	endTime     string
 	period      util.TimePeriod
+	force       bool
 }
 
 var cliFlags CliFlags
@@ -53,6 +54,7 @@ func init() {
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(listCmd)
 	rootCmd.AddCommand(addCmd)
+	rootCmd.AddCommand(deleteCmd)
 }
 
 func initConfig() {

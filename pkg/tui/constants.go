@@ -25,7 +25,7 @@ var (
 	deleteShortcut     = NewShortcut("d", "Delete")
 	quitShortcut       = NewShortcut("q", "Quit")
 	periodShortcut     = NewShortcut("Tab", "Period")
-	enterShortcut      = NewShortcut("Enter", "Spans")
+	enterShortcut      = NewShortcut("Enter", "SpansSets")
 	backShortcut       = NewShortcut("Esc", "Back")
 	boxSummaryShortcut = NewShortcut("b", "Boxes")
 	timelineShortcut   = NewShortcut("t", "Timeline")
